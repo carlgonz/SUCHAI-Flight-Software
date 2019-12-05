@@ -568,7 +568,8 @@ int dat_set_time(int new_time)
     clock_set_time(&timestamp);
     return 0;
 #else
-    // TODO: This needs to be tested on a raspberry LINUX system, to see if the sudo call asks for permissions or not
+    // TODO: This needs to be tested on a raspberry LINUX system, to see if the
+    //  sudo call asks for permissions or not
 
     size_t command_length = 28;
 
@@ -605,15 +606,12 @@ int dat_set_time(int new_time)
 
 int dat_show_time(int format)
 {
-#ifdef AVR32
     time_t time_to_show = dat_get_time();
-#else
-    time_t time_to_show = time(NULL);
-#endif
 
     if(format == 0)
     {
         printf("%s\n",ctime(&time_to_show));
+        printf("%s\n",gmtime(&time_to_show));
         return 0;
     }
     else if(format == 1)

@@ -66,7 +66,7 @@
 #ifdef ESP32
     void app_main();
 #else
-    int main(void);
+    int main(int argc, char **argv);
 #endif
 
 #endif //SUCHAI_FLIGHT_SOFTWARE_MAIN_H

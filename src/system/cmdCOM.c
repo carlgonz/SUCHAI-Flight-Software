@@ -20,7 +20,7 @@
 #include "cmdCOM.h"
 
 static const char *tag = "cmdCOM";
-static char trx_node = SCH_TRX_ADDRESS;
+static char trx_node;
 
 #ifdef SCH_USE_NANOCOM
 static void _com_config_help(void);
@@ -29,6 +29,8 @@ static void _com_config_find(char *param_name, int *table, gs_param_table_instan
 
 void cmd_com_init(void)
 {
+    trx_node = (char)SCH_TRX_ADDRESS;
+
     cmd_add("com_ping", com_ping, "%d", 1);
     cmd_add("com_send_rpt", com_send_rpt, "%d %s", 2);
     cmd_add("com_send_cmd", com_send_cmd, "%d %n", 1);

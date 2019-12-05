@@ -29,9 +29,12 @@ const char *tag = "main";
 #ifdef ESP32
 void app_main()
 #else
-int main(void)
+int main(int argc, char **argv)
 #endif
 {
+    /* Load settings */
+    load_config(argc, argv);
+
     /* On reset */
     on_reset();
     printf("\n\n--------- FLIGHT SOFTWARE START ---------\n");

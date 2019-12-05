@@ -38,5 +38,12 @@ void on_close(int signal);
  */
 void on_reset(void);
 
+/**
+ *
+ * @param argc
+ * @param argv
+ */
+void load_config(int argc, char **argv);
+
 #endif //SUCHAI_FLIGHT_SOFTWARE_INITI_H
 
