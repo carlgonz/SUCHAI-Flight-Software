@@ -87,7 +87,7 @@ void init_communications(void)
         csp_debug_set_level(CSP_ERROR, 1);
         csp_debug_set_level(CSP_WARN, 1);
         csp_debug_set_level(CSP_INFO, 1);
-        csp_debug_set_level(CSP_BUFFER, 1);
+        csp_debug_set_level(CSP_BUFFER, 0);
         csp_debug_set_level(CSP_PACKET, 1);
         csp_debug_set_level(CSP_PROTOCOL, 1);
         csp_debug_set_level(CSP_LOCK, 0);
@@ -117,7 +117,7 @@ void init_communications(void)
      *  Platform dependent
      */
 #ifdef LINUX
-    #ifndef SIMULATED
+    #ifndef SIMULATOR
     struct usart_conf conf;
     conf.device = SCH_KISS_DEVICE;
     conf.baudrate = SCH_KISS_UART_BAUDRATE;
@@ -132,10 +132,25 @@ void init_communications(void)
     #endif
 
     /* Set ZMQ interface */
-    static csp_iface_t csp_if_zmqhub;
-    csp_zmqhub_init_w_endpoints(SCH_COMM_ADDRESS, SCH_COMM_ZMQ_OUT, SCH_COMM_ZMQ_IN);
-    csp_route_set(CSP_DEFAULT_ROUTE, &csp_if_zmqhub, CSP_NODE_MAC);
-    csp_rtable_set(8, 2, &csp_if_zmqhub, SCH_TRX_ADDRESS);
+    static csp_iface_t *csp_if_zmqhub;
+    extern char *SCH_COMM_ZMQ_IN;
+    extern char *SCH_COMM_ZMQ_OUT;
+    printf("ZMQ: %s; %s", SCH_COMM_ZMQ_IN, SCH_COMM_ZMQ_OUT);
+
+    uint8_t * rxfilter = NULL;
+    unsigned int rxfilter_count = 0;
+    uint8_t addr = (uint8_t)SCH_COMM_ADDRESS;
+    rxfilter = &addr;
+    rxfilter_count = 1;
+
+    csp_zmqhub_init_w_name_endpoints_rxfilter(CSP_ZMQHUB_IF_NAME,
+                                              rxfilter, rxfilter_count,
+                                              SCH_COMM_ZMQ_OUT,
+                                              SCH_COMM_ZMQ_IN,
+                                              &csp_if_zmqhub);
+//    csp_zmqhub_init_w_endpoints(SCH_COMM_ADDRESS, SCH_COMM_ZMQ_OUT, SCH_COMM_ZMQ_IN);
+    csp_route_set(CSP_DEFAULT_ROUTE, csp_if_zmqhub, CSP_NODE_MAC);
+    //csp_rtable_set(8, 2, csp_if_zmqhub, SCH_TRX_ADDRESS);
 #endif //LINUX
 
 #ifdef NANOMIND
