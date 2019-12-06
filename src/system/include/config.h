@@ -27,7 +27,7 @@
 /* Select one operating system */
 #define LINUX        ///< LINUX | FREERTOS
 /* Select the correct architecture */
-#define X86      ///< X86 | RPI | GROUNDSTATION | ESP32 | AVR32 | NANOMIND
+#define SIMULATOR      ///< X86 | RPI | GROUNDSTATION | ESP32 | AVR32 | NANOMIND
 
 /* Platform specific settings */
 #ifdef GROUNDSTATION
@@ -46,7 +46,7 @@
 /* System debug configurations */
 #define LOG_LEVEL               LOG_LVL_INFO        ///< LOG_LVL_INFO |  LOG_LVL_DEBUG
 #define SCH_NAME                "SUCHAI-FS"         ///< Project code name
-#define SCH_DEVICE_ID           1             ///< Device unique ID
+#define _SCH_DEVICE_ID           1             ///< Device unique ID
 #define SCH_SW_VERSION          "2.1.3"      ///< Software version
 
 /* General system settings */

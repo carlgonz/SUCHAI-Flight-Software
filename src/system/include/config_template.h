@@ -46,7 +46,7 @@
 /* System debug configurations */
 #define LOG_LEVEL               {{LOG_LVL}}        ///< LOG_LVL_INFO |  LOG_LVL_DEBUG
 #define SCH_NAME                "{{NAME}}"         ///< Project code name
-#define SCH_DEVICE_ID           {{ID}}             ///< Device unique ID
+#define _SCH_DEVICE_ID           {{ID}}             ///< Device unique ID
 #define SCH_SW_VERSION          "{{VERSION}}"      ///< Software version
 
 /* General system settings */
@@ -54,24 +54,24 @@
 #define SCH_FP_ENABLED          {{SCH_EN_FP}}      ///< TaskFlightPlan enabled (0 | 1)
 #define SCH_HK_ENABLED          {{SCH_EN_HK}}      ///< TaskHousekeeping enabled (0 | 1)
 #define SCH_TEST_ENABLED        {{SCH_EN_TEST}}    ///< Set to run tests (0 | 1)
-#define SCH_WDT_PERIOD          120                 ///< CPU watchdog timer period in seconds
-#define SCH_MAX_WDT_TIMER       60                  ///< Seconds to send wdt_reset command
+#define SCH_WDT_PERIOD          120                ///< CPU watchdog timer period in seconds
+#define SCH_MAX_WDT_TIMER       (3600*48)          ///< Seconds to send wdt_reset command
 #define SCH_MAX_GND_WDT_TIMER   (3600*48)          ///< Seconds to reset the OBC if the ground watchdog was not clear
 #define SCH_UART_BAUDRATE       (500000)           ///< UART baud rate for serial console
 #define SCH_KISS_UART_BAUDRATE  (500000)           ///< UART baud rate for kiss communication
 #define SCH_KISS_DEVICE         "/dev/ttyUSB0"     ///< Kiss device path
 
 /* Communications system settings */
-#define SCH_COMM_ADDRESS        {{SCH_COMM_NODE}}  ///< Node address
-#define SCH_TNC_ADDRESS         9                  ///< TNC node address
-#define SCH_TRX_ADDRESS         5                  ///< TRX node address
-#define SCH_EPS_ADDRESS         2                  ///< EPS node address
+#define SCH_COMM_ADDRESS        SCH_DEVICE_ID  ///< Node address
+#define _SCH_TNC_ADDRESS         9                  ///< TNC node address
+#define _SCH_TRX_ADDRESS         5                  ///< TRX node address
+#define _SCH_EPS_ADDRESS         2                  ///< EPS node address
 #define SCH_TRX_PORT_TM         (9)                ///< Telemetry port
 #define SCH_TRX_PORT_TC         (10)               ///< Telecommands port
 #define SCH_TRX_PORT_RPT        (11)               ///< Digirepeater port (resend packets)
 #define SCH_TRX_PORT_CMD        (12)               ///< Commands port (execute console commands)
-#define SCH_COMM_ZMQ_OUT        "{{SCH_ZMQ_OUT}}"  ///< Out socket URI
-#define SCH_COMM_ZMQ_IN         "{{SCH_ZMQ_IN}}"   ///< In socket URI
+#define _SCH_COMM_ZMQ_OUT        "{{SCH_ZMQ_OUT}}"  ///< Out socket URI
+#define _SCH_COMM_ZMQ_IN         "{{SCH_ZMQ_IN}}"   ///< In socket URI
 #define SCH_TX_INHIBIT          10                 /// Default silent time in seconds [0, 1800 (30min)]
 #define SCH_TX_PWR              0                  /// Default TX power [0|1|2|3]
 #define SCH_TX_BCN_PERIOD       60                 /// Default beacon period in seconds
