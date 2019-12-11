@@ -110,9 +110,9 @@
 #define SCH_BUFF_MAX_LEN          (256)     ///< General buffers max length in bytes
 #define SCH_BUFFERS_CSP           (5)       ///< Number of available CSP buffers
 #define SCH_FP_MAX_ENTRIES        (25)      ///< Max number of flight plan entries
-#define SCH_CMD_MAX_ENTRIES       (255)      ///< Max number of commands in the repository
-#define SCH_CMD_MAX_STR_PARAMS    (64)      ///< Limit for the parameters length
-#define SCH_CMD_MAX_STR_NAME      (64)      ///< Limit for the length of the name of a command
-#define SCH_CMD_MAX_STR_FORMAT    (32)      ///< Limit for the length of the format field of a command
+#define SCH_CMD_MAX_ENTRIES       (255)     ///< Max number of commands in the repository
+#define SCH_CMD_MAX_STR_PARAMS    (255)     ///< Limit for the parameters length
+#define SCH_CMD_MAX_STR_NAME      (255)     ///< Limit for the length of the name of a command
+#define SCH_CMD_MAX_STR_FORMAT    (255)     ///< Limit for the length of the format field of a command
 
 #endif //SUCHAI_CONFIG_H
