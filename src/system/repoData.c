@@ -268,11 +268,11 @@ static int _dat_set_fp_async(int timetodo, char* command, char* args, int execut
             data_base[i].executions = executions;
             data_base[i].periodical = periodical;
 
-            data_base[i].cmd = malloc(sizeof(char)*50);
-            data_base[i].args = malloc(sizeof(char)*50);
+            data_base[i].cmd = malloc(sizeof(char)*SCH_CMD_MAX_STR_NAME);
+            data_base[i].args = malloc(sizeof(char)*SCH_CMD_MAX_STR_PARAMS);
 
-            strcpy(data_base[i].cmd, command);
-            strcpy(data_base[i].args,args);
+            strncpy(data_base[i].cmd, command, SCH_CMD_MAX_STR_NAME);
+            strncpy(data_base[i].args,args, SCH_CMD_MAX_STR_FORMAT);
 
             return 0;
         }
