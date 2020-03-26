@@ -41,12 +41,16 @@ int gssb_msp_outside_temp_calibrate(char *fmt, char *params, int nparams);
 int gssb_internal_temp(char *fmt, char *params, int nparams);
 int gssb_interstage_burn(char *fmt, char *params, int nparams);
 int gssb_common_sun_voltage(char *fmt, char *params, int nparams);
-int gssb_interstage_burn_settings(char *fmt, char *params, int nparams);
+int gssb_interstage_get_burn_settings(char *fmt, char *params, int nparams);
+int gssb_interstage_set_burn_settings(char *fmt, char *params, int nparams);
 int gssb_interstage_arm(char *fmt, char *params, int nparams);
 int gssb_interstage_state(char *fmt, char *params, int nparams);
 int gssb_interstage_settings_unlock(char *fmt, char *params, int nparams);
 int gssb_soft_reset(char *fmt, char *params, int nparams);
 int gssb_interstage_get_status(char *fmt, char *params, int nparams);
+
+int gssb_update_status(char *fmt, char *params, int nparams);
+int gssb_antenna_release(char *fmt, char *params, int nparams);
 
 //NOT REGISTERED AS COMMANDS
 int gssb_ar6_burn(char *fmt, char *params, int nparams);

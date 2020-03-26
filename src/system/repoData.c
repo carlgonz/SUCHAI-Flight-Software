@@ -39,6 +39,8 @@ time_t sec = 0;
     fp_entry_t data_base [SCH_FP_MAX_ENTRIES];
 #endif
 
+sample_machine_t machine;
+
 void initialize_payload_vars(void){
     int i =0;
     for(i=0; i< last_sensor; ++i) {
@@ -420,7 +422,7 @@ int dat_show_fp (void)
     }
     rc = 0;
 #else
-    rc = storage_show_table();
+    rc = storage_flight_plan_show_table();
 #endif
     //Exit critical zone
     osSemaphoreGiven(&repo_data_fp_sem);
@@ -544,9 +546,8 @@ int dat_add_payload_sample(void* data, int payload)
 }
 
 
-int dat_get_recent_payload_sample(void* data, int payload, int delay)
+int dat_get_recent_payload_sample(void* data, int payload, int offset)
 {
-    //TODO: Change variable name from delay to offset??
     int ret;
 
     int index = dat_get_system_var(data_map[payload].sys_index);
@@ -556,12 +557,11 @@ int dat_get_recent_payload_sample(void* data, int payload, int delay)
     osSemaphoreTake(&repo_data_sem, portMAX_DELAY);
     //TODO: Is this conditional required?
 #if defined(LINUX) || defined(NANOMIND)
-    if(index-1-delay >= 0) {
-        ret = storage_get_payload_data(index-1-delay, data, payload);
+    if(index-1-offset >= 0) {
+        ret = storage_get_payload_data(index-1-offset, data, payload);
     }
     else {
-        //FIXME: "Asked for too large offset (%d) on payload (%d)
-        LOGE(tag, "Asked for too great of a delay when requesting payload %d on delay %d", payload, delay);
+        LOGE(tag, "Asked for too large offset (%d) on payload (%d)", offset, payload);
         ret = -1;
     }
 #else
@@ -690,5 +690,19 @@ int dat_print_payload_struct(void* data, unsigned int payload)
     free(values);
     free(names);
 
+    return 0;
+}
+
+int set_machine_state(machine_action_t action, unsigned int step, int nsamples)
+{
+    LOGI(tag, "Changing state to  %d %u %d", action, step, nsamples);
+    if (action >= 0 && action < ACT_LAST && step > 0 && nsamples > -2) {
+        osSemaphoreTake(&repo_machine_sem, portMAX_DELAY);
+        machine.action = action;
+        machine.step = step;
+        machine.samples_left = nsamples;
+        osSemaphoreGiven(&repo_machine_sem);
+        return 1;
+    }
     return 0;
 }

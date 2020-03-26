@@ -54,6 +54,12 @@ void dat_status_to_struct(dat_status_t *status)
     DAT_CPY_SYSTEM_VAR_F(status, dat_ads_mag_x);         ///< Magnetometer x axis
     DAT_CPY_SYSTEM_VAR_F(status, dat_ads_mag_y);         ///< Magnetometer y axis
     DAT_CPY_SYSTEM_VAR_F(status, dat_ads_mag_z);         ///< Magnetometer z axis
+    DAT_CPY_SYSTEM_VAR_F(status, dat_ads_pos_x);         ///< Satellite orbit position x (ECI)
+    DAT_CPY_SYSTEM_VAR_F(status, dat_ads_pos_y);         ///< Satellite orbit position y (ECI)
+    DAT_CPY_SYSTEM_VAR_F(status, dat_ads_pos_z);         ///< Satellite orbit position z (ECI)
+    DAT_CPY_SYSTEM_VAR(status, dat_ads_tle_epoch);       ///< Current TLE epoch, 0 if TLE is invalid
+    DAT_CPY_SYSTEM_VAR(status, dat_ads_tle_last);        ///< Las time position was propagated
+
 
     DAT_CPY_SYSTEM_VAR(status, dat_eps_vbatt);         ///< Voltage of battery [mV]
     DAT_CPY_SYSTEM_VAR(status, dat_eps_cur_sun);       ///< Current from boost converters [mA]
@@ -69,6 +75,12 @@ void dat_status_to_struct(dat_status_t *status)
     DAT_CPY_SYSTEM_VAR(status, dat_drp_ack_ads);
     DAT_CPY_SYSTEM_VAR(status, dat_drp_ack_eps);
     DAT_CPY_SYSTEM_VAR(status, dat_drp_ack_lang);
+
+    DAT_CPY_SYSTEM_VAR(status, dat_drp_mach_action);
+    DAT_CPY_SYSTEM_VAR(status, dat_drp_mach_state);
+    DAT_CPY_SYSTEM_VAR(status, dat_drp_mach_step);
+    DAT_CPY_SYSTEM_VAR(status, dat_drp_mach_payloads);
+    DAT_CPY_SYSTEM_VAR(status, dat_drp_mach_left);
 }
 
 void dat_print_status(dat_status_t *status)
@@ -107,6 +119,11 @@ void dat_print_status(dat_status_t *status)
     DAT_PRINT_SYSTEM_VAR_F(status, dat_ads_mag_x);         ///< Magnetometer x axis
     DAT_PRINT_SYSTEM_VAR_F(status, dat_ads_mag_y);         ///< Magnetometer y axis
     DAT_PRINT_SYSTEM_VAR_F(status, dat_ads_mag_z);         ///< Magnetometer z axis
+    DAT_PRINT_SYSTEM_VAR_F(status, dat_ads_pos_x);         ///< Satellite orbit position x (ECI)
+    DAT_PRINT_SYSTEM_VAR_F(status, dat_ads_pos_y);         ///< Satellite orbit position y (ECI)
+    DAT_PRINT_SYSTEM_VAR_F(status, dat_ads_pos_z);         ///< Satellite orbit position z (ECI)
+    DAT_PRINT_SYSTEM_VAR(status, dat_ads_tle_epoch);       ///< Current TLE epoch, 0 if TLE is invalid
+    DAT_PRINT_SYSTEM_VAR(status, dat_ads_tle_last);        ///< Las time position was propagated
 
     DAT_PRINT_SYSTEM_VAR(status, dat_eps_vbatt);         ///< Voltage of battery [mV]
     DAT_PRINT_SYSTEM_VAR(status, dat_eps_cur_sun);       ///< Current from boost converters [mA]
@@ -122,5 +139,11 @@ void dat_print_status(dat_status_t *status)
     DAT_PRINT_SYSTEM_VAR(status, dat_drp_ack_ads);
     DAT_PRINT_SYSTEM_VAR(status, dat_drp_ack_eps);
     DAT_PRINT_SYSTEM_VAR(status, dat_drp_ack_lang);
+
+    DAT_PRINT_SYSTEM_VAR(status, dat_drp_mach_action);
+    DAT_PRINT_SYSTEM_VAR(status, dat_drp_mach_state);
+    DAT_PRINT_SYSTEM_VAR(status, dat_drp_mach_step);
+    DAT_PRINT_SYSTEM_VAR(status, dat_drp_mach_payloads);
+    DAT_PRINT_SYSTEM_VAR(status, dat_drp_mach_left);
 }
 

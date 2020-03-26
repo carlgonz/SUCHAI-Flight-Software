@@ -1,9 +1,9 @@
 /*                                 SUCHAI
  *                      NANOSATELLITE FLIGHT SOFTWARE
  *
- *      Copyright 2019, Carlos Gonzalez Cortes, carlgonz@uchile.cl
- *      Copyright 2019, Tomas Opazo Toro, tomas.opazo.t@gmail.com
- *      Copyright 2019, Matias Ramirez Martinez, nicoram.mt@gmail.com
+ *      Copyright 2020, Carlos Gonzalez Cortes, carlgonz@uchile.cl
+ *      Copyright 2020, Tomas Opazo Toro, tomas.opazo.t@gmail.com
+ *      Copyright 2020, Matias Ramirez Martinez, nicoram.mt@gmail.com
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,10 +18,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
+#include <math.h>
 #include "cmdOBC.h"
 
 static const char* tag = "cmdOBC";
+
+#define TLE_BUFF_LEN 70
+TLE tle;
+static char tle1[TLE_BUFF_LEN]; //"1 42788U 17036Z   20054.20928660  .00001463  00000-0  64143-4 0  9996";
+static char tle2[TLE_BUFF_LEN]; //"2 42788  97.3188 111.6825 0013081  74.6084 285.6598 15.23469130148339";
 
 void cmd_obc_init(void)
 {
@@ -38,6 +44,10 @@ void cmd_obc_init(void)
     cmd_add("obc_pwm_pwr", obc_pwm_pwr, "%d", 1);
     cmd_add("obc_get_sensors", obc_get_sensors, "", 0);
     cmd_add("obc_update_status", obc_update_status, "", 0);
+    cmd_add("obc_get_tle", obc_get_tle, "", 0);
+    cmd_add("obc_set_tle", obc_set_tle, "%d %n", 2);
+    cmd_add("obc_update_tle", obc_update_tle, "", 0);
+    cmd_add("obc_prop_tle", obc_prop_tle, "%ld", 1);
 }
 
 int obc_ident(char* fmt, char* params, int nparams)
@@ -422,6 +432,117 @@ int obc_update_status(char *fmt, char *params, int nparams)
     printf("Mag x, y, z: %f, %f, %f\r\n\r\n",hmc_reading.x, hmc_reading.y, hmc_reading.z);
 #endif
 #endif
+
+    return CMD_OK;
+}
+
+int obc_get_tle(char *fmt, char *params, int nparams)
+{
+    LOGI(tag, "%s", tle1);
+    LOGI(tag, "%s", tle2);
+}
+
+int obc_set_tle(char *fmt, char *params, int nparams)
+{
+    int line_n, next;
+
+    // fmt: "%d %n", nparams: 2
+    // First number is parsed @line_n, but then all the line pointed by @params
+    // is copied to the corresponding TLE line. Examples of @params:
+
+    //          1         2         3         4         5         6
+    //0123456789012345678901234567890123456789012345678901234567890123456789
+    //----------------------------------------------------------------------
+    //1 42788U 17036Z   20054.20928660  .00001463  00000-0  64143-4 0  9996
+    //2 42788  97.3188 111.6825 0013081  74.6084 285.6598 15.23469130148339
+    if(params != NULL && sscanf(params, fmt, &line_n, &next) != nparams-1)
+    {
+        LOGE(tag, "Error parsing parameters!");
+        return CMD_ERROR;
+    }
+
+    if(strlen(params) != 69)
+    {
+        LOGE(tag, "Invalid TLE line len! (%d)", strlen(params));
+        return CMD_ERROR;
+    }
+
+    if(line_n == 1)
+    {
+        memset(tle1, 0, TLE_BUFF_LEN);
+        strncpy(tle1, params, TLE_BUFF_LEN-1);
+    }
+    else if(line_n == 2)
+    {
+        memset(tle2, 0, TLE_BUFF_LEN);
+        strncpy(tle2, params, TLE_BUFF_LEN-1);
+    }
+    else
+    {
+        LOGE(tag, "Invalid TLE Line parameter");
+        return CMD_ERROR;
+    }
+
+    return CMD_OK;
+}
+
+int obc_update_tle(char *fmt, char *params, int nparams)
+{
+    portTick init_time = osTaskGetTickCount();
+    parseLines(&tle, tle1, tle2);
+    portTick parse_time = osTaskGetTickCount();
+
+    //TODO: Check errors
+    if(tle.sgp4Error != 0)
+    {
+        dat_set_system_var(dat_ads_tle_epoch, 0);
+        return CMD_FAIL;
+    }
+
+    LOGV(tag, "Updated to epoch %ld (%d)", tle.epoch, (int)(tle.epoch));
+    dat_set_system_var(dat_ads_tle_epoch, (int)(tle.epoch));
+
+    //TODO: Remove time measurement in future revisions
+    portTick final_time = osTaskGetTickCount();
+    LOGI(tag, "parseLines    : %.06f ms", (parse_time-init_time)/1000.0);
+    LOGI(tag, "obc_update_tle: %.06f ms", (final_time-init_time)/1000.0);
+    return CMD_OK;
+}
+
+int obc_prop_tle(char *fmt, char *params, int nparams)
+{
+    double r[3];  // Sat position in ECI frame
+    double v[3];  // Sat velocity in ECI frame
+    time_t ts;
+
+    if(params != NULL && sscanf(params, fmt, &ts) != nparams)
+        return CMD_ERROR;
+
+    if(ts == 0)
+        ts = time(NULL);
+
+    portTick init_time = osTaskGetTickCount();
+    getRVForDate(&tle, ts*1000, r, v);
+    portTick getrv_time = osTaskGetTickCount();
+
+    LOGV(tag, "R : (%.4f, %.4f, %.4f)", r[0], r[1], r[2]);
+    LOGV(tag, "V : (%.4f, %.4f, %.4f)", v[0], v[1], v[2]);
+    LOGV(tag, "T : %d", ts);
+    LOGV(tag, "Er: %d", tle.rec.error);
+
+    if(tle.sgp4Error != 0)
+        return CMD_FAIL;
+
+    value pos[3] = {(float)r[0], (float)r[1], (float)r[2]};
+    dat_set_system_var(dat_ads_pos_x, pos[0].i);
+    dat_set_system_var(dat_ads_pos_y, pos[1].i);
+    dat_set_system_var(dat_ads_pos_z, pos[2].i);
+    dat_set_system_var(dat_ads_tle_last, (int)ts);
+
+    //TODO: Remove time measurement in future revisions
+    portTick final_time = osTaskGetTickCount();
+    LOGI(tag, "getRVForDate: %.06f ms", (getrv_time-init_time)/1000.0);
+    LOGI(tag, "obc_prop_tle: %.06f ms", (final_time-init_time)/1000.0);
 
     return CMD_OK;
 }

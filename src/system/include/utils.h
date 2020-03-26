@@ -21,6 +21,8 @@
 #include "os/os.h"
 #include "osSemphr.h"
 
+#include "csp/csp.h"
+
 /**
  * @brief Log level
  *
@@ -45,23 +47,40 @@ typedef enum {
 #define LF   "\n"       ///< Use LF terminated log strings
 #define CRLF "\r\n"     ///< USE CRLF terminated log strings
 
-osSemaphore log_mutex;  ///< Sync logging functions, require initialization
+extern osSemaphore log_mutex;  ///< Sync logging functions, require initialization
 
 /**
  * Init logging system, specifically shared mutex
+ * Set the log level and node to send logs. If node = -1, then print to stdout,
+ * else send logs to another node using CSP
+ * @param level Log level
+ * @param node CSP node to send logs. Set to -1 to use stdout.
  * @return Int. CSP_SEMAPHORE_OK(1) or CSP_SEMAPHORE_ERROR(2)
  */
-static inline int log_init(void)
-{
-    return osSemaphoreCreate(&log_mutex);
-}
+int log_init(log_level_t level, int node);
+
+/**
+ * Set the log level and node to send logs. If node = -1, then print to stdout,
+ * else send logs to another node using CSP
+ * @param level Log level
+ * @param node CSP node to send logs. Set to -1 to use stdout.
+ */
+void log_set(log_level_t level, int node);
+
+void log_print(const char *lvl, const char *tag, const char *msg, ...);
+void log_send(const char *lvl, const char *tag, const char *msg, ...);
+
+extern void (*log_function)(const char *lvl, const char *tag, const char *msg, ...);
+extern log_level_t log_lvl;
+extern uint8_t log_node;
 
 /// Logging functions @see log_level_t
-#define LOGE(tag, msg, ...) if(LOG_LEVEL >= LOG_LVL_ERROR)   {osSemaphoreTake(&log_mutex, portMAX_DELAY); fprintf(LOGOUT,"[ERROR][%lu][%s] ", (unsigned long)time(NULL), tag); fprintf(LOGOUT,msg, ##__VA_ARGS__); fprintf(LOGOUT,CRLF); fflush(LOGOUT); osSemaphoreGiven(&log_mutex);}
-#define LOGW(tag, msg, ...) if(LOG_LEVEL >= LOG_LVL_WARN)    {osSemaphoreTake(&log_mutex, portMAX_DELAY); fprintf(LOGOUT,"[WARN ][%lu][%s] ", (unsigned long)time(NULL), tag); fprintf(LOGOUT,msg, ##__VA_ARGS__); fprintf(LOGOUT,CRLF); fflush(LOGOUT); osSemaphoreGiven(&log_mutex);}
-#define LOGI(tag, msg, ...) if(LOG_LEVEL >= LOG_LVL_INFO)    {osSemaphoreTake(&log_mutex, portMAX_DELAY); fprintf(LOGOUT,"[INFO ][%lu][%s] ", (unsigned long)time(NULL), tag); fprintf(LOGOUT,msg, ##__VA_ARGS__); fprintf(LOGOUT,CRLF); fflush(LOGOUT); osSemaphoreGiven(&log_mutex);}
-#define LOGD(tag, msg, ...) if(LOG_LEVEL >= LOG_LVL_DEBUG)   {osSemaphoreTake(&log_mutex, portMAX_DELAY); fprintf(LOGOUT,"[DEBUG][%lu][%s] ", (unsigned long)time(NULL), tag); fprintf(LOGOUT,msg, ##__VA_ARGS__); fprintf(LOGOUT,CRLF); fflush(LOGOUT); osSemaphoreGiven(&log_mutex);}
-#define LOGV(tag, msg, ...) if(LOG_LEVEL >= LOG_LVL_VERBOSE) {osSemaphoreTake(&log_mutex, portMAX_DELAY); fprintf(LOGOUT,"[VERB ][%lu][%s] ", (unsigned long)time(NULL), tag); fprintf(LOGOUT,msg, ##__VA_ARGS__); fprintf(LOGOUT,CRLF); fflush(LOGOUT); osSemaphoreGiven(&log_mutex);}
+#define LOGE(tag, msg, ...) if(log_lvl >= LOG_LVL_ERROR)   {osSemaphoreTake(&log_mutex, portMAX_DELAY); log_function("ERROR", tag, msg, ##__VA_ARGS__); osSemaphoreGiven(&log_mutex);}
+#define LOGW(tag, msg, ...) if(log_lvl >= LOG_LVL_WARN)    {osSemaphoreTake(&log_mutex, portMAX_DELAY); log_function("WARN ", tag, msg, ##__VA_ARGS__); osSemaphoreGiven(&log_mutex);}
+#define LOGI(tag, msg, ...) if(log_lvl >= LOG_LVL_INFO)    {osSemaphoreTake(&log_mutex, portMAX_DELAY); log_function("INFO ", tag, msg, ##__VA_ARGS__); osSemaphoreGiven(&log_mutex);}
+#define LOGD(tag, msg, ...) if(log_lvl >= LOG_LVL_DEBUG)   {osSemaphoreTake(&log_mutex, portMAX_DELAY); log_function("DEBUG", tag, msg, ##__VA_ARGS__); osSemaphoreGiven(&log_mutex);}
+#define LOGV(tag, msg, ...) if(log_lvl >= LOG_LVL_VERBOSE) {osSemaphoreTake(&log_mutex, portMAX_DELAY); log_function("VERB ", tag, msg, ##__VA_ARGS__); osSemaphoreGiven(&log_mutex);}
+#define LOGR(tag, msg, ...)                                {osSemaphoreTake(&log_mutex, portMAX_DELAY); log_print   ("REMOT", tag, msg, ##__VA_ARGS__); osSemaphoreGiven(&log_mutex);}
 
 /// Assert functions
 #define clean_errno() (errno == 0 ? "None" : strerror(errno))

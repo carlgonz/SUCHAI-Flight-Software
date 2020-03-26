@@ -9,7 +9,7 @@
  * @author Ignacio Ibanez A
  * @author Diego Ortego P
  *
- * @date 2019
+ * @date 2020
  * @copyright GNU GPL v3
  *
  * This header contains system wide settings to customize different submodules
@@ -50,12 +50,14 @@
 #define SCH_SW_VERSION          "{{VERSION}}"      ///< Software version
 
 /* General system settings */
+#define SCH_CON_ENABLED         {{SCH_EN_CON}}     ///< TaskConsole enabled (0 | 1)
 #define SCH_COMM_ENABLE         {{SCH_EN_COMM}}    ///< TaskCommunications enabled (0 | 1)
 #define SCH_FP_ENABLED          {{SCH_EN_FP}}      ///< TaskFlightPlan enabled (0 | 1)
 #define SCH_HK_ENABLED          {{SCH_EN_HK}}      ///< TaskHousekeeping enabled (0 | 1)
+#define SCH_SEN_ENABLED         {{SCH_EN_SEN}}     ///< TaskSensors enabled (0 | 1)
 #define SCH_TEST_ENABLED        {{SCH_EN_TEST}}    ///< Set to run tests (0 | 1)
-#define SCH_WDT_PERIOD          120                 ///< CPU watchdog timer period in seconds
-#define SCH_MAX_WDT_TIMER       60                  ///< Seconds to send wdt_reset command
+#define SCH_WDT_PERIOD          120                ///< CPU watchdog timer period in seconds
+#define SCH_MAX_WDT_TIMER       60                 ///< Seconds to send wdt_reset command
 #define SCH_MAX_GND_WDT_TIMER   (3600*48)          ///< Seconds to reset the OBC if the ground watchdog was not clear
 #define SCH_UART_BAUDRATE       (500000)           ///< UART baud rate for serial console
 #define SCH_KISS_UART_BAUDRATE  (500000)           ///< UART baud rate for kiss communication
@@ -70,6 +72,7 @@
 #define SCH_TRX_PORT_TC         (10)               ///< Telecommands port
 #define SCH_TRX_PORT_RPT        (11)               ///< Digirepeater port (resend packets)
 #define SCH_TRX_PORT_CMD        (12)               ///< Commands port (execute console commands)
+#define SCH_TRX_PORT_DBG        (13)               ///< Debug port, logs output
 #define SCH_COMM_ZMQ_OUT        "{{SCH_ZMQ_OUT}}"  ///< Out socket URI
 #define SCH_COMM_ZMQ_IN         "{{SCH_ZMQ_IN}}"   ///< In socket URI
 #define SCH_TX_INHIBIT          10                 /// Default silent time in seconds [0, 1800 (30min)]
@@ -106,13 +109,14 @@
 #define SCH_TASK_CON_STACK        (5*256)   ///< Console task stack size in words
 #define SCH_TASK_HKP_STACK        (5*256)   ///< Housekeeping task stack size in words
 #define SCH_TASK_CSP_STACK        (5*256)     ///< CSP route task stack size in words
+#define SCH_TASK_SEN_STACK        (5*256)   ///< Sensor task stack size in words
 
 #define SCH_BUFF_MAX_LEN          (256)     ///< General buffers max length in bytes
-#define SCH_BUFFERS_CSP           (5)       ///< Number of available CSP buffers
+#define SCH_BUFFERS_CSP           (10)       ///< Number of available CSP buffers
 #define SCH_FP_MAX_ENTRIES        (25)      ///< Max number of flight plan entries
 #define SCH_CMD_MAX_ENTRIES       (255)      ///< Max number of commands in the repository
-#define SCH_CMD_MAX_STR_PARAMS    (64)      ///< Limit for the parameters length
-#define SCH_CMD_MAX_STR_NAME      (64)      ///< Limit for the length of the name of a command
-#define SCH_CMD_MAX_STR_FORMAT    (32)      ///< Limit for the length of the format field of a command
+#define SCH_CMD_MAX_STR_PARAMS    (256)      ///< Limit for the parameters length
+#define SCH_CMD_MAX_STR_NAME      (256)      ///< Limit for the length of the name of a command
+#define SCH_CMD_MAX_STR_FORMAT    (128)      ///< Limit for the length of the format field of a command
 
 #endif //SUCHAI_CONFIG_H

@@ -43,10 +43,29 @@ void taskHousekeeping(void *param)
 
         /* 1 second actions */
         dat_set_system_var(dat_rtc_date_time, (int) time(NULL));
+
         //  Debug command
-        cmd_t *cmd_dbg = cmd_get_str("obc_debug");
-        cmd_add_params_var(cmd_dbg, 0);
-        cmd_send(cmd_dbg);
+        if(log_lvl > LOG_LVL_DEBUG)
+        {
+            cmd_t *cmd_dbg = cmd_get_str("obc_debug");
+            cmd_add_params_var(cmd_dbg, 0);
+            cmd_send(cmd_dbg);
+        }
+
+        /* 10 sec actions */
+        // Update position
+        if ((elapsed_sec % _10sec_check) == 0)
+        {
+            // Check if the TLE epoch is valid
+            int tle_epoch = dat_get_system_var(dat_ads_tle_epoch);
+            if(tle_epoch > 0)
+            {
+                cmd_t *cmd_tle_prop;
+                cmd_tle_prop = cmd_get_str("obc_prop_tle");
+                cmd_add_params_str(cmd_tle_prop, "0");
+                cmd_send(cmd_tle_prop);
+            }
+        }
 
         /* 1 minute actions */
         // Update status vars
