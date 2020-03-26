@@ -1,7 +1,7 @@
 /**
  * @file  dataSchema.h
  * @author Camilo Rojas M - camrojas@uchile.cl
- * @date 2019
+ * @date 2020
  * @copyright GNU GPL v3
  *
  * This header contains structs symbolizing the schema of data.
@@ -175,8 +175,8 @@ typedef struct __attribute__((packed)) dat_status_s {
     float dat_ads_pos_x;            ///< Satellite orbit position x (ECI)
     float dat_ads_pos_y;            ///< Satellite orbit position y (ECI)
     float dat_ads_pos_z;            ///< Satellite orbit position z (ECI)
-    int dat_ads_tle_epoch;          ///< Current TLE epoch, 0 if TLE is invalid
-    int dat_ads_tle_last;           ///< Las time position was propagated
+    int32_t dat_ads_tle_epoch;      ///< Current TLE epoch, 0 if TLE is invalid
+    int32_t dat_ads_tle_last;       ///< Las time position was propagated
 
     /// EPS: Energy power system
     uint32_t dat_eps_vbatt;         ///< Voltage of battery [mV]
