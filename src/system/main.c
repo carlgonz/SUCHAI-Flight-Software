@@ -35,6 +35,9 @@ int run(time_t start, unsigned int seconds, int dt_s);
 
 int main(void)
 {
+    /* Load settings */
+    load_config(argc, argv);
+
     /* On reset */
     on_reset();
     printf("\n\n--------- FLIGHT SOFTWARE START ---------\n");

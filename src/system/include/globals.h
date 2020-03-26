@@ -20,5 +20,11 @@ extern osSemaphore repo_data_sem;        ///< Data repository mutex
 extern osSemaphore repo_data_fp_sem;     ///< Flight plan repository mutex
 extern osSemaphore repo_machine_sem;     ///< State machine repository mutex
 extern osSemaphore repo_cmd_sem;         ///< Command repository mutex
+extern char *SCH_COMM_ZMQ_OUT;
+extern char *SCH_COMM_ZMQ_IN;
+extern int SCH_DEVICE_ID;
+extern int SCH_TNC_ADDRESS;
+extern int SCH_TRX_ADDRESS;
+extern int SCH_EPS_ADDRESS;
 
 #endif //GLOBALS_H

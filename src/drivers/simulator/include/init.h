@@ -26,6 +26,7 @@
 #endif
 
 
+
 /**
  * Performs a clean exit
  *
@@ -37,6 +38,13 @@ void on_close(int signal);
  * Performs initialization actions
  */
 void on_reset(void);
+
+/**
+ *
+ * @param argc
+ * @param argv
+ */
+void load_config(int argc, char **argv);
 
 #endif //SUCHAI_FLIGHT_SOFTWARE_INITI_H
 

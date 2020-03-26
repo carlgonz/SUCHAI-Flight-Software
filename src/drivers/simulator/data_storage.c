@@ -258,8 +258,6 @@ int storage_table_flight_plan_init(int drop)
     return 0;
 }
 
-
-
 int storage_table_payload_init(int drop)
 {
 
@@ -864,7 +862,6 @@ const char* get_sql_type(char* c_type)
 //        return 0;
 //    }
 //}
-
 
 
 
