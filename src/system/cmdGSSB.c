@@ -45,17 +45,19 @@ void cmd_gssb_init(void)
     cmd_add("gssb_get_model", gssb_get_model, "", 0);
     cmd_add("gssb_get_temp", gssb_interstage_temp, "", 0);
     cmd_add("gssb_msp_get_temp", gssb_msp_outside_temp, "", 0);
-    cmd_add("gssb_msp_cal_temp", gssb_msp_outside_temp_calibrate, "", 0);
+    cmd_add("gssb_msp_cal_temp", gssb_msp_outside_temp_calibrate, "%d %d", 2);
     cmd_add("gssb_get_temp_int", gssb_internal_temp, "", 0);
     cmd_add("gssb_burn", gssb_interstage_burn, "", 0);
     cmd_add("gssb_get_sun", gssb_common_sun_voltage, "", 0);
-    cmd_add("gssb_get_burn_config", gssb_interstage_burn_settings, "", 0);
-    cmd_add("gssb_set_burn_config", gssb_interstage_burn_settings, "%d %d %d %d %d %d %d", 7);
+    cmd_add("gssb_get_burn_config", gssb_interstage_get_burn_settings, "", 0);
+    cmd_add("gssb_set_burn_config", gssb_interstage_set_burn_settings, "%d %d %d %d %d %d %d", 7);
     cmd_add("gssb_arm_auto", gssb_interstage_arm, "%d", 1);
     cmd_add("gssb_arm_manual", gssb_interstage_state, "%d", 1);
     cmd_add("gssb_unlock_config", gssb_interstage_settings_unlock, "%d", 1);
     cmd_add("gssb_reset", gssb_soft_reset, "", 0);
     cmd_add("gssb_get_status", gssb_interstage_get_status, "", 0);
+    cmd_add("gssb_update_status", gssb_update_status, "", 0);
+    cmd_add("gssb_antenna_release", gssb_antenna_release, "%d %d %d %d", 4);
 
 }
 
@@ -77,6 +79,8 @@ int gssb_pwr(char *fmt, char *params, int nparams)
         gs_a3200_pwr_switch_enable(GS_A3200_PWR_GSSB2);
     else
         gs_a3200_pwr_switch_disable(GS_A3200_PWR_GSSB2);
+
+    osDelay(100);
 
     LOGI(tag, "Set GSSB switch state to: %d %d", vcc_on, vcc2_on);
     return CMD_OK;
@@ -378,12 +382,9 @@ int gssb_common_sun_voltage(char *fmt, char *params, int nparams)
     return CMD_ERROR_NONE;
 }
 
-/* Register the set and get with different parameters */
-int gssb_interstage_burn_settings(char *fmt, char *params, int nparams)
+int gssb_interstage_get_burn_settings(char *fmt, char *params, int nparams)
 {
     gs_gssb_istage_burn_settings_t settings;
-    int std_time, increment_ms, short_cnt_down, max_repeat, rep_time_s;
-    int switch_polarity, reboot_deploy_cnt;
 
     /* When the command is called with out arguments then print the settings */
     if (params == NULL || nparams == 0) {
@@ -405,10 +406,26 @@ int gssb_interstage_burn_settings(char *fmt, char *params, int nparams)
         printf("Settings locked:\t %"PRIu8"\r\n", settings.locked);
 
     /* Else set settings */
-    } else if (sscanf(params, fmt, &std_time, &increment_ms, &short_cnt_down,
-            &max_repeat, &rep_time_s, &switch_polarity, &reboot_deploy_cnt) == nparams) {
+    }else {
+        return CMD_ERROR_SYNTAX;
+    }
+
+    return CMD_ERROR_NONE;
+}
+
+
+int gssb_interstage_set_burn_settings(char *fmt, char *params, int nparams)
+{
+    gs_gssb_istage_burn_settings_t settings;
+    int std_time, increment_ms, short_cnt_down, max_repeat, rep_time_s;
+    int switch_polarity, reboot_deploy_cnt;
+
+    if (sscanf(params, fmt, &std_time, &increment_ms, &short_cnt_down,
+                      &max_repeat, &rep_time_s, &switch_polarity, &reboot_deploy_cnt) == nparams) {
         /* First fetch settings and check that the interstage is unlocked and if it
          * is not then print warning about the settings cannot be changed */
+        if (gs_gssb_istage_get_burn_settings(i2c_addr, i2c_timeout_ms, &settings) != GS_OK)
+            return CMD_ERROR_FAIL;
 
         /* Check settings range */
         //int tmp;
@@ -498,7 +515,6 @@ int gssb_interstage_burn_settings(char *fmt, char *params, int nparams)
 
     return CMD_ERROR_NONE;
 }
-
 
 int gssb_interstage_arm(char *fmt, char *params, int nparams)
 {
@@ -954,4 +970,99 @@ int gssb_common_backup_settings(char *fmt, char *params, int nparams)
     printf("\tMax burn duration:\t\t\t %hhu\n\r", settings.max_burn_duration);
 
     return CMD_ERROR_NONE;
+}
+
+int gssb_update_status(char *fmt, char *params, int nparams)
+{
+    char istage_addr[4] = {0x10, 0x11, 0x12, 0x13};
+    gs_gssb_istage_status_t status;
+    int deploy_status = 0;
+    int rel_status = 0;
+    int i = 0;
+
+    for(i=0; i < 4; i++)
+    {
+        if(gs_gssb_istage_status(istage_addr[i], i2c_timeout_ms, &status) != GS_OK)
+        {
+            LOGE(tag, "Error reading status from %d", istage_addr[i])
+            return CMD_ERROR_FAIL;
+        }
+        rel_status = status.release_status;
+        deploy_status += rel_status;
+        LOGI(tag, "Interstage selected: %#x. Released: %d", istage_addr[i], rel_status);
+    }
+
+    if(deploy_status >= 0)
+    {
+        LOGI(tag, "Antennas release status: %d", deploy_status);
+        dat_set_system_var(dat_dep_ant_deployed, deploy_status);
+        return CMD_OK;
+    }
+    else
+        return CMD_FAIL;
+}
+
+int gssb_antenna_release(char *fmt, char *params, int nparams)
+{
+    int addr, knife_on, knife_off, repeats = 0;
+
+    if(params == NULL)
+    {
+        LOGE(tag, "Null params");
+        return CMD_ERROR;
+    }
+
+    int rc = 1;
+    gs_gssb_istage_burn_settings_t settings;
+
+    if(sscanf(params, fmt, &addr, &knife_on, &knife_off, &repeats) == nparams)
+    {
+        //Get current config
+        if (gs_gssb_istage_get_burn_settings(addr, i2c_timeout_ms, &settings) != GS_OK)
+            return CMD_ERROR_FAIL;
+
+        // Fill parameters
+        settings.std_time_ms = knife_on;
+        settings.increment_ms = 0;
+        settings.short_cnt_down = 0;
+        settings.max_repeat = repeats;
+        settings.rep_time_s = knife_off;
+
+        // Unlock parameters
+        if (gs_gssb_istage_settings_unlock(addr, i2c_timeout_ms) != GS_OK)
+            return CMD_ERROR_FAIL;
+        // Set parameters
+        if (gs_gssb_istage_set_burn_settings(addr, i2c_timeout_ms, &settings) != GS_OK)
+            return CMD_ERROR_FAIL;
+        /* We need to have a delay as we write the settings to EEPROM which takes some time */
+        osDelay(50);
+        // "Setting burn cnt...
+        if (gs_gssb_istage_set_burn_settings_cnt(addr, i2c_timeout_ms, &settings) != GS_OK)
+            return CMD_ERROR_FAIL;
+        /* We need to have a delay as we write the settings to EEPROM which takes some time */
+        osDelay(20);
+        if (gs_gssb_istage_settings_lock(addr, i2c_timeout_ms) != GS_OK)
+            return CMD_ERROR_FAIL;
+        printf("Resetting interstage...\n");
+        gs_gssb_soft_reset(addr, i2c_timeout_ms);
+        LOGD(tag, "istage on: %d. Off: %d. Rep: %d. (rc: %d)",
+             knife_on, knife_off, repeats, rc);
+
+        // Deploy manual
+        if (gs_gssb_istage_settings_unlock(addr, i2c_timeout_ms) != GS_OK)
+            return CMD_ERROR_FAIL;
+        if (gs_gssb_istage_set_arm(addr, i2c_timeout_ms, 0x08) != GS_OK)
+            return CMD_ERROR_FAIL;
+        // Burn
+        if (gs_gssb_istage_burn(addr, i2c_timeout_ms) != GS_OK)
+            return CMD_ERROR_FAIL;
+        LOGI(tag, "istage %#x deploying! (rc: %d)", addr, rc);
+
+        return CMD_OK;
+    }
+    else
+    {
+        LOGE(tag, "Error parsing params");
+        return CMD_ERROR;
+    }
 }

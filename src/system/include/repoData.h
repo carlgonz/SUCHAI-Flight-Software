@@ -28,6 +28,39 @@
 #include "osSemphr.h"
 #include <repoDataSchema.h>
 
+typedef enum machine_action {
+    ACT_PAUSE= 0,
+    ACT_START,
+    ACT_STAND_BY,
+    ACT_LAST
+} machine_action_t;
+
+typedef enum machine_state {
+    ST_PAUSE = 0,
+    ST_SAMPLING,
+    ST_LAST
+} machine_state_t;
+
+typedef struct sample_machine{
+    machine_state_t state;
+    machine_action_t action;
+    unsigned int active_payloads;
+    unsigned int step;
+    int samples_left;
+} sample_machine_t;
+
+extern sample_machine_t machine;
+
+/**
+ * Change sample machine state.
+ *
+ * @param machine action to take (ST_PAUSE, ST_SAMPLING)
+ * @param step seconds period of sampling measure in seconds
+ * @param nsamples maximum samples to take, if value is-1 the machine will take unlimited samples
+ */
+int set_machine_state(machine_action_t action, unsigned int step, int nsamples);
+
+
 /**
  * Initializes payload storage helper variables
  */
@@ -60,6 +93,7 @@ void dat_repo_close(void);
  * @param value Integer value to set the variable to
  */
 void dat_set_system_var(dat_system_t index, int value);
+void _dat_set_system_var(dat_system_t index, int value);  //Auxiliary function for testing
 
 /**
  * Returns an int field's value inside the status repository.
@@ -68,6 +102,7 @@ void dat_set_system_var(dat_system_t index, int value);
  * @return The field's value
  */
 int dat_get_system_var(dat_system_t index);
+int _dat_get_system_var(dat_system_t index);  //Auxiliary function for testing
 
 /**
  * Gets an executable command from the flight plan repo.
@@ -178,7 +213,7 @@ int dat_add_payload_sample(void* data, int payload);
  * @param delay Delay of the recent value
  * @return 0 if OK, -1 if and error occurred
  */
-int dat_get_recent_payload_sample(void* data, int payload, int delay);
+int dat_get_recent_payload_sample(void* data, int payload, int offset);
 
 /**
  * Deletes all memory sections in NOR FLASH.

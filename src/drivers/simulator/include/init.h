@@ -20,6 +20,13 @@
 #include "repoData.h"
 #include "repoCommand.h"
 
+#if SCH_COMM_ENABLE
+#include <csp/csp.h>
+#include <csp/interfaces/csp_if_zmqhub.h>
+#endif
+
+
+
 /**
  * Performs a clean exit
  *

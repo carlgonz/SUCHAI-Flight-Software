@@ -82,9 +82,25 @@ typedef enum dat_system {
     dat_ads_acc_x,                ///< Gyroscope acceleration value along the x axis
     dat_ads_acc_y,                ///< Gyroscope acceleration value along the y axis
     dat_ads_acc_z,                ///< Gyroscope acceleration value along the z axis
+    dat_tgt_acc_x,                ///< Target acceleration value along the x axis
+    dat_tgt_acc_y,                ///< Target acceleration value along the y axis
+    dat_tgt_acc_z,                ///< Target acceleration value along the z axis
     dat_ads_mag_x,                ///< Magnetometer value along the x axis
     dat_ads_mag_y,                ///< Magnetometer value along the y axis
     dat_ads_mag_z,                ///< Magnetometer value along the z axis
+    dat_ads_pos_x,                ///< Satellite orbit position x (ECI)
+    dat_ads_pos_y,                ///< Satellite orbit position y (ECI)
+    dat_ads_pos_z,                ///< Satellite orbit position z (ECI)
+    dat_ads_tle_epoch,            ///< Current TLE epoch, 0 if TLE is invalid
+    dat_ads_tle_last,             ///< Las time position was propagated
+    dat_ads_q0,                  ///< Attitude quaternion (Inertial to body)
+    dat_ads_q1,                  ///< Attitude quaternion (Inertial to body)
+    dat_ads_q2,                  ///< Attitude quaternion (Inertial to body)
+    dat_ads_q3,                  ///< Attitude quaternion (Inertial to body)
+    dat_tgt_q0,                  ///< Target quaternion (Inertial to body)
+    dat_tgt_q1,                  ///< Target quaternion (Inertial to body)
+    dat_tgt_q2,                  ///< Target quaternion (Inertial to body)
+    dat_tgt_q3,                  ///< Target quaternion (Inertial to body)
 
     /// EPS: Energy power system
     dat_eps_vbatt,                ///< Voltage of the battery [mV]
@@ -103,6 +119,13 @@ typedef enum dat_system {
     dat_drp_ack_ads,                  ///< ADS data index acknowledge
     dat_drp_ack_eps,                  ///< EPS data index acknowledge
     dat_drp_ack_lang,                 ///< Langmuir data index acknowledge
+
+    /// Sample Machine: Current state of sample machine
+    dat_drp_mach_action,
+    dat_drp_mach_state,
+    dat_drp_mach_step,
+    dat_drp_mach_payloads,
+    dat_drp_mach_left,
 
     /// Add custom status variables here
     //dat_custom,                 ///< Variable description
@@ -157,9 +180,25 @@ typedef struct __attribute__((packed)) dat_status_s {
     float dat_ads_acc_x;            ///< Gyroscope acceleration value along the x axis
     float dat_ads_acc_y;            ///< Gyroscope acceleration value along the y axis
     float dat_ads_acc_z;            ///< Gyroscope acceleration value along the z axis
+    float dat_tgt_acc_x;            ///< Target acceleration value along the x axis
+    float dat_tgt_acc_y;            ///< Target acceleration value along the y axis
+    float dat_tgt_acc_z;            ///< Target acceleration value along the z axis
     float dat_ads_mag_x;            ///< Magnetometer value along the x axis
     float dat_ads_mag_y;            ///< Magnetometer value along the y axis
     float dat_ads_mag_z;            ///< Magnetometer value along the z axis
+    float dat_ads_pos_x;            ///< Satellite orbit position x (ECI)
+    float dat_ads_pos_y;            ///< Satellite orbit position y (ECI)
+    float dat_ads_pos_z;            ///< Satellite orbit position z (ECI)
+    int32_t dat_ads_tle_epoch;      ///< Current TLE epoch, 0 if TLE is invalid
+    int32_t  dat_ads_tle_last;      ///< Las time position was propagated
+    float dat_ads_q0;               ///< Attitude quaternion (Inertial to body)
+    float dat_ads_q1;               ///< Attitude quaternion (Inertial to body)
+    float dat_ads_q2;               ///< Attitude quaternion (Inertial to body)
+    float dat_ads_q3;               ///< Attitude quaternion (Inertial to body)
+    float dat_tgt_q0;               ///< Target quaternion (Inertial to body)
+    float dat_tgt_q1;               ///< Target quaternion (Inertial to body)
+    float dat_tgt_q2;               ///< Target quaternion (Inertial to body)
+    float dat_tgt_q3;               ///< Target quaternion (Inertial to body)
 
     /// EPS: Energy power system
     uint32_t dat_eps_vbatt;         ///< Voltage of battery [mV]
@@ -178,6 +217,13 @@ typedef struct __attribute__((packed)) dat_status_s {
     uint32_t dat_drp_ack_ads;       ///< ADS data index acknowledge
     uint32_t dat_drp_ack_eps;       ///< EPS data index acknowledge
     uint32_t dat_drp_ack_lang;      ///< Langmuir data index acknowledge
+
+    /// Sample Machine:
+    uint32_t dat_drp_mach_action;
+    uint32_t dat_drp_mach_state;
+    int32_t dat_drp_mach_step;
+    uint32_t dat_drp_mach_payloads;
+    int32_t dat_drp_mach_left;
 
     /// Add custom status variables here
     //uint32_t dat_custom;          ///< Variable description

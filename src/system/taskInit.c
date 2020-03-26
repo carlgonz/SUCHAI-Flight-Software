@@ -25,6 +25,27 @@ static const char *tag = "taskInit";
 static csp_iface_t *csp_if_zmqhub;
 static csp_iface_t csp_if_kiss;
 
+#ifdef SIMULATOR
+osQueue csp_if_queue_tx;
+int csp_queue_tx(csp_iface_t *ifc, csp_packet_t *packet, uint32_t timeout);
+
+csp_iface_t csp_if_queue = {
+  .name = "queue",
+  .nexthop = csp_queue_tx,
+  .mtu = SCH_BUFF_MAX_LEN,
+};
+
+int csp_queue_tx(csp_iface_t *ifc, csp_packet_t *packet, uint32_t timeout) {
+  /* Write packet to queue */
+  int rc = osQueueSend(csp_if_queue_tx, &packet, timeout);
+  if (rc > 0)
+    return CSP_ERR_NONE;
+
+  printf("Failed to write frame\r\n");
+  return CSP_ERR_TX;
+}
+#endif //SIMULATOR
+
 #ifdef GROUNDSTATION
     static csp_kiss_handle_t csp_kiss_driver;
     void my_usart_rx(uint8_t * buf, int len, void * pxTaskWoken) {
@@ -44,6 +65,7 @@ void taskInit(void *param)
     dat_set_system_var(dat_obc_hrs_wo_reset, 0);
     dat_set_system_var(dat_obc_reset_counter, dat_get_system_var(dat_obc_reset_counter) + 1);
     dat_set_system_var(dat_obc_sw_wdt, 0);  // Reset the gnd wdt on boot
+    dat_set_system_var(dat_ads_tle_epoch, 0);  // Reset TLE on boot
 #if (SCH_STORAGE_MODE > 0)
     initialize_payload_vars();
 #endif
@@ -64,12 +86,14 @@ void taskInit(void *param)
 
     LOGD(tag, "Creating client tasks ...");
     int t_ok;
-    int n_threads = 4;
+    int n_threads = 5;
     os_thread thread_id[n_threads];
 
     /* Creating clients tasks */
+#if SCH_CON_ENABLED
     t_ok = osCreateTask(taskConsole, "console", SCH_TASK_CON_STACK, NULL, 2, &(thread_id[0]));
     if(t_ok != 0) LOGE(tag, "Task console not created!");
+#endif
 #if SCH_HK_ENABLED
     t_ok = osCreateTask(taskHousekeeping, "housekeeping", SCH_TASK_HKP_STACK, NULL, 2, &(thread_id[1]));
     if(t_ok != 0) LOGE(tag, "Task housekeeping not created!");
@@ -81,6 +105,10 @@ void taskInit(void *param)
 #if SCH_FP_ENABLED
     t_ok = osCreateTask(taskFlightPlan,"flightplan", SCH_TASK_FPL_STACK, NULL, 2, &(thread_id[3]));
     if(t_ok != 0) LOGE(tag, "Task flightplan not created!");
+#endif
+#if SCH_SEN_ENABLED
+    t_ok = osCreateTask(taskSensors,"sensors", SCH_TASK_SEN_STACK, NULL, 2, &(thread_id[4]));
+    if(t_ok != 0) LOGE(tag, "Task sensors not created!");
 #endif
 
     osTaskDelete(NULL);
@@ -95,8 +123,8 @@ void init_communications(void)
     csp_debug_set_level(CSP_ERROR, 1);
     csp_debug_set_level(CSP_WARN, 1);
     csp_debug_set_level(CSP_INFO, 1);
-    csp_debug_set_level(CSP_BUFFER, 1);
-    csp_debug_set_level(CSP_PACKET, 1);
+    csp_debug_set_level(CSP_BUFFER, 0);
+    csp_debug_set_level(CSP_PACKET, 0);
     csp_debug_set_level(CSP_PROTOCOL, 1);
     csp_debug_set_level(CSP_LOCK, 0);
 
@@ -113,6 +141,11 @@ void init_communications(void)
      * Set interfaces and routes
      *  Platform dependent
      */
+#ifdef SIMULATOR
+    csp_if_queue_tx = osQueueCreate(100, sizeof(csp_packet_t*));
+    csp_route_set(CSP_DEFAULT_ROUTE, &csp_if_queue, CSP_NODE_MAC);
+#endif
+
 #ifdef GROUNDSTATION
     struct usart_conf conf;
     conf.device = SCH_KISS_DEVICE;
@@ -174,33 +207,33 @@ void init_routines(void)
     LOGD(tag, "\tAntenna deployment...")
     //Turn on gssb and update antenna deployment status
     cmd_t *cmd_dep;
-    cmd_dep = cmd_get_str("istage_pwr");
-    cmd_add_params_str(cmd_dep, "1 0");
+    cmd_dep = cmd_get_str("gssb_pwr");
+    cmd_add_params_str(cmd_dep, "1 1");
     cmd_send(cmd_dep);
 
-    cmd_dep = cmd_get_str("istage_update_status");
+    cmd_dep = cmd_get_str("gssb_update_status");
     cmd_send(cmd_dep);
 
     //Try to deploy antennas if necessary
     //      istage 1. On: 2s, off: 1s, rep: 5
-    cmd_dep = cmd_get_str("istage_antenna_release");
+    cmd_dep = cmd_get_str("gssb_antenna_release");
     cmd_add_params_var(cmd_dep, 16, 2, 1, 5);
     cmd_send(cmd_dep);
     //      istage 2. On: 2s, off: 1s, rep: 5
-    cmd_dep = cmd_get_str("istage_antenna_release");
+    cmd_dep = cmd_get_str("gssb_antenna_release");
     cmd_add_params_var(cmd_dep, 17, 2, 1, 5);
     cmd_send(cmd_dep);
     //      istage 3. On: 2s, off: 1s, rep: 5
-    cmd_dep = cmd_get_str("istage_antenna_release");
+    cmd_dep = cmd_get_str("gssb_antenna_release");
     cmd_add_params_var(cmd_dep, 18, 2, 1, 5);
     cmd_send(cmd_dep);
     //      istage 4. On: 2s, off: 1s, rep: 5
-    cmd_dep = cmd_get_str("istage_antenna_release");
+    cmd_dep = cmd_get_str("gssb_antenna_release");
     cmd_add_params_var(cmd_dep, 19, 2, 1, 5);
     cmd_send(cmd_dep);
 
     //Update antenna deployment status
-    cmd_dep = cmd_get_str("istage_update_status");
+    cmd_dep = cmd_get_str("gssb_update_status");
     cmd_send(cmd_dep);
 
 
@@ -210,7 +243,7 @@ void init_routines(void)
     trx_cmd = cmd_get_str("com_set_config");
     cmd_add_params_var(trx_cmd, "tx_inhibit", TOSTRING(SCH_TX_INHIBIT));
     cmd_send(trx_cmd);
-    if(LOG_LEVEL >= LOG_LVL_DEBUG)
+    if(log_lvl >= LOG_LVL_DEBUG)
     {
         trx_cmd = cmd_get_str("com_get_config");
         cmd_add_params_str(trx_cmd, "tx_inhibit");
@@ -220,7 +253,7 @@ void init_routines(void)
     trx_cmd = cmd_get_str("com_set_config");
     cmd_add_params_var(trx_cmd, "tx_pwr", TOSTRING(SCH_TX_PWR));
     cmd_send(trx_cmd);
-    if(LOG_LEVEL >= LOG_LVL_DEBUG)
+    if(log_lvl >= LOG_LVL_DEBUG)
     {
         trx_cmd = cmd_get_str("com_get_config");
         cmd_add_params_str(trx_cmd, "tx_pwr");
@@ -230,7 +263,7 @@ void init_routines(void)
     trx_cmd = cmd_get_str("com_set_config");
     cmd_add_params_var(trx_cmd, "bcn_interval", TOSTRING(SCH_TX_BCN_PERIOD));
     cmd_send(trx_cmd);
-    if(LOG_LEVEL >= LOG_LVL_DEBUG)
+    if(log_lvl >= LOG_LVL_DEBUG)
     {
         trx_cmd = cmd_get_str("com_get_config");
         cmd_add_params_str(trx_cmd, "bcn_interval");
@@ -240,7 +273,7 @@ void init_routines(void)
     trx_cmd = cmd_get_str("com_set_config");
     cmd_add_params_var(trx_cmd, "freq", TOSTRING(SCH_TX_FREQ));
     cmd_send(trx_cmd);
-    if(LOG_LEVEL >= LOG_LVL_DEBUG)
+    if(log_lvl >= LOG_LVL_DEBUG)
     {
         trx_cmd = cmd_get_str("com_get_config");
         cmd_add_params_str(trx_cmd, "freq");
@@ -250,7 +283,7 @@ void init_routines(void)
     trx_cmd = cmd_get_str("com_set_config");
     cmd_add_params_var(trx_cmd, "baud", TOSTRING(SCH_TX_BAUD));
     cmd_send(trx_cmd);
-    if(LOG_LEVEL >= LOG_LVL_DEBUG)
+    if(log_lvl >= LOG_LVL_DEBUG)
     {
         trx_cmd = cmd_get_str("com_get_config");
         cmd_add_params_str(trx_cmd, "baud");

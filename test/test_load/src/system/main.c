@@ -1,12 +1,12 @@
 /*                                 SUCHAI
  *                      NANOSATELLITE FLIGHT SOFTWARE
  *
- *      Copyright 2018, Carlos Gonzalez Cortes, carlgonz@uchile.cl
- *      Copyright 2018, Camilo Rojas Milla, camrojas@uchile.cl
- *      Copyright 2018, Tomas Opazo Toro, tomas.opazo.t@gmail.com
- *      Copyright 2018, Matias Ramirez Martinez, nicoram.mt@gmail.com
- *      Copyright 2018, Tamara Gutierrez Rojo TGR_93@hotmail.com
- *      Copyright 2018, Ignacio Ibanez Aliaga, ignacio.ibanez@usach.cl
+ *      Copyright 2020, Carlos Gonzalez Cortes, carlgonz@uchile.cl
+ *      Copyright 2020, Camilo Rojas Milla, camrojas@uchile.cl
+ *      Copyright 2020, Tomas Opazo Toro, tomas.opazo.t@gmail.com
+ *      Copyright 2020, Matias Ramirez Martinez, nicoram.mt@gmail.com
+ *      Copyright 2020, Tamara Gutierrez Rojo TGR_93@hotmail.com
+ *      Copyright 2020, Ignacio Ibanez Aliaga, ignacio.ibanez@usach.cl
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ int main(void)
     on_reset();
 
     /* Init software subsystems */
-    log_init();      // Logging system
+    log_init(LOG_LEVEL, 0);      // Logging system
     cmd_repo_init(); // Command repository initialization
     dat_repo_init(); // Update status repository
 
