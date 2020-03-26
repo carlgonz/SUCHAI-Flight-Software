@@ -26,3 +26,9 @@ osSemaphore repo_data_sem;        ///< Data repository mutex
 osSemaphore repo_data_fp_sem;     ///< Flight plan repository mutex
 osSemaphore repo_machine_sem;     ///< State machine repository mutex
 osSemaphore repo_cmd_sem;         ///< Command repository mutex
+char *SCH_COMM_ZMQ_OUT;
+char *SCH_COMM_ZMQ_IN;
+int SCH_DEVICE_ID;
+int SCH_TNC_ADDRESS;
+int SCH_TRX_ADDRESS;
+int SCH_EPS_ADDRESS;

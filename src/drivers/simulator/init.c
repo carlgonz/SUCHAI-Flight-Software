@@ -42,8 +42,6 @@ void on_reset(void)
 
 void load_config(int argc, char **argv)
 {
-    extern char *SCH_COMM_ZMQ_IN;
-    extern char *SCH_COMM_ZMQ_OUT;
     SCH_COMM_ZMQ_OUT = _SCH_COMM_ZMQ_OUT;
     SCH_COMM_ZMQ_IN = _SCH_COMM_ZMQ_IN;
 
@@ -54,10 +52,6 @@ void load_config(int argc, char **argv)
     }
     printf("ZMQ: %s; %s\n", SCH_COMM_ZMQ_IN, SCH_COMM_ZMQ_OUT);
 
-    extern int SCH_DEVICE_ID;
-    extern int SCH_TNC_ADDRESS;
-    extern int SCH_TRX_ADDRESS;
-    extern int SCH_EPS_ADDRESS;
     SCH_DEVICE_ID = _SCH_DEVICE_ID;
     SCH_EPS_ADDRESS = _SCH_EPS_ADDRESS;
     SCH_TRX_ADDRESS = _SCH_TRX_ADDRESS;

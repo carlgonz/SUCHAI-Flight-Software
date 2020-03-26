@@ -33,7 +33,7 @@ void pre_tick_hook(void);
 void pos_tick_hook(void);
 int run(time_t start, unsigned int seconds, int dt_s);
 
-int main(void)
+int main(int argc, char **argv)
 {
     /* Load settings */
     load_config(argc, argv);
