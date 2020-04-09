@@ -10,7 +10,7 @@ from csp_zmq.zmqnode import threaded
 class ZmqPayload(CspZmqNode):
 
     def __init__(self, node=3, hub_ip='localhost', in_port="8001", out_port="8002"):
-        CspZmqNode.__init__(self, node, hub_ip, in_port, out_port, monitor=True, console=True)
+        CspZmqNode.__init__(self, node, hub_ip, in_port, out_port, reader=True, writer=True)
 
     def read_message(self, message, header=None):
         print("PAYLOAD:", message, header.dst_port if header else None)

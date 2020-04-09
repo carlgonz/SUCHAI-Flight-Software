@@ -36,7 +36,7 @@ typedef struct __attribute__((packed)) {
 class ZmqNanopower(CspZmqNode):
 
     def __init__(self, node=2, hub_ip='localhost', in_port="8001", out_port="8002"):
-        CspZmqNode.__init__(self, node, hub_ip, in_port, out_port, monitor=True, console=True)
+        CspZmqNode.__init__(self, node, hub_ip, in_port, out_port, reader=True, writer=True)
         self.eps_hk_t = '3H1H3H1H1H1H6H8B8H8H6H1I1I2B1I1I2I1I6h1B1B1B' #1H'
         self.eps_config_t = '1B1B1b1b8B8B8H8H3h'
 

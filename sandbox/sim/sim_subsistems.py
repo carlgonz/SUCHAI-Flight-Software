@@ -28,7 +28,7 @@ if __name__ == "__main__":
     mon_port = str(8003)  # + args.node)
     nobc, neps, ntrx, ntnc = [str(i+args.node) for i in range(4)]
 
-    # hub = CspZmqHub(in_port=out_port, out_port=in_port, mon_port=mon_port, monitor=False, console=False)
+    # hub = CspZmqHub(in_port=out_port, out_port=in_port, mon_port=mon_port, reader=False, writer=False)
     trx = ZmqNanocom(ntrx, args.ip, in_port, out_port,
                      ntnc, args.ip, args.e_in_port, args.e_out_port)
     eps = ZmqNanopower(neps, in_port=in_port, out_port=out_port)
