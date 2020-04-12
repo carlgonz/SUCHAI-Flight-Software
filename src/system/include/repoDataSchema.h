@@ -52,6 +52,7 @@ typedef enum dat_system {
     dat_obc_hrs_wo_reset,         ///< Hours since last reset
     dat_obc_reset_counter,        ///< Number of reset since first boot
     dat_obc_sw_wdt,               ///< Software watchdog timer counter
+    dat_obc_cmd_queue,            ///< Command queue size
     dat_obc_temp_1,               ///< Temperature value of the first sensor
     dat_obc_temp_2,               ///< Temperature value of the second sensor
     dat_obc_temp_3,               ///< Temperature value of the gyroscope
@@ -79,28 +80,28 @@ typedef enum dat_system {
     dat_fpl_queue,                ///< Flight plan queue length
 
     /// ADS: Altitude determination system
-    dat_ads_acc_x,                ///< Gyroscope acceleration value along the x axis
-    dat_ads_acc_y,                ///< Gyroscope acceleration value along the y axis
-    dat_ads_acc_z,                ///< Gyroscope acceleration value along the z axis
-    dat_tgt_acc_x,                ///< Target acceleration value along the x axis
-    dat_tgt_acc_y,                ///< Target acceleration value along the y axis
-    dat_tgt_acc_z,                ///< Target acceleration value along the z axis
-    dat_ads_mag_x,                ///< Magnetometer value along the x axis
-    dat_ads_mag_y,                ///< Magnetometer value along the y axis
-    dat_ads_mag_z,                ///< Magnetometer value along the z axis
+//    dat_ads_acc_x,                ///< Gyroscope acceleration value along the x axis
+//    dat_ads_acc_y,                ///< Gyroscope acceleration value along the y axis
+//    dat_ads_acc_z,                ///< Gyroscope acceleration value along the z axis
+//    dat_tgt_acc_x,                ///< Target acceleration value along the x axis
+//    dat_tgt_acc_y,                ///< Target acceleration value along the y axis
+//    dat_tgt_acc_z,                ///< Target acceleration value along the z axis
+//    dat_ads_mag_x,                ///< Magnetometer value along the x axis
+//    dat_ads_mag_y,                ///< Magnetometer value along the y axis
+//    dat_ads_mag_z,                ///< Magnetometer value along the z axis
     dat_ads_pos_x,                ///< Satellite orbit position x (ECI)
     dat_ads_pos_y,                ///< Satellite orbit position y (ECI)
     dat_ads_pos_z,                ///< Satellite orbit position z (ECI)
     dat_ads_tle_epoch,            ///< Current TLE epoch, 0 if TLE is invalid
     dat_ads_tle_last,             ///< Las time position was propagated
-    dat_ads_q0,                  ///< Attitude quaternion (Inertial to body)
-    dat_ads_q1,                  ///< Attitude quaternion (Inertial to body)
-    dat_ads_q2,                  ///< Attitude quaternion (Inertial to body)
-    dat_ads_q3,                  ///< Attitude quaternion (Inertial to body)
-    dat_tgt_q0,                  ///< Target quaternion (Inertial to body)
-    dat_tgt_q1,                  ///< Target quaternion (Inertial to body)
-    dat_tgt_q2,                  ///< Target quaternion (Inertial to body)
-    dat_tgt_q3,                  ///< Target quaternion (Inertial to body)
+//    dat_ads_q0,                  ///< Attitude quaternion (Inertial to body)
+//    dat_ads_q1,                  ///< Attitude quaternion (Inertial to body)
+//    dat_ads_q2,                  ///< Attitude quaternion (Inertial to body)
+//    dat_ads_q3,                  ///< Attitude quaternion (Inertial to body)
+//    dat_tgt_q0,                  ///< Target quaternion (Inertial to body)
+//    dat_tgt_q1,                  ///< Target quaternion (Inertial to body)
+//    dat_tgt_q2,                  ///< Target quaternion (Inertial to body)
+//    dat_tgt_q3,                  ///< Target quaternion (Inertial to body)
 
     /// EPS: Energy power system
     dat_eps_vbatt,                ///< Voltage of the battery [mV]
@@ -145,11 +146,12 @@ typedef enum dat_system {
 typedef struct __attribute__((packed)) dat_status_s {
     /// OBC: on board computer related variables.
     int32_t dat_obc_opmode;         ///< General operation mode
-    int32_t dat_obc_last_reset;     ///< Last reset source
-    int32_t dat_obc_hrs_alive;      ///< Hours since first boot
-    int32_t dat_obc_hrs_wo_reset;   ///< Hours since last reset
-    int32_t dat_obc_reset_counter;  ///< Number of reset since first boot
-    int32_t dat_obc_sw_wdt;         ///< Software watchdog timer counter
+    uint32_t dat_obc_last_reset;    ///< Last reset source
+    uint32_t dat_obc_hrs_alive;     ///< Hours since first boot
+    uint32_t dat_obc_hrs_wo_reset;  ///< Hours since last reset
+    uint32_t dat_obc_reset_counter; ///< Number of reset since first boot
+    uint32_t dat_obc_sw_wdt;        ///< Software watchdog timer counter
+    int32_t dat_obc_cmd_queue;      ///< Command queue size
     float dat_obc_temp_1;           ///< Temperature value of the first sensor
     float dat_obc_temp_2;           ///< Temperature value of the second sensor
     float dat_obc_temp_3;           ///< Temperature value of the gyroscope
@@ -160,12 +162,12 @@ typedef struct __attribute__((packed)) dat_status_s {
     int32_t dat_dep_date_time;      ///< Antenna deployment unix time
 
     /// RTC: related variables
-    int32_t dat_rtc_date_time;      ///< RTC current unix time
+    uint32_t dat_rtc_date_time;      ///< RTC current unix time
 
     /// COM: communications system variables.
-    int32_t dat_com_count_tm;       ///< Number of Telemetries sent
-    int32_t dat_com_count_tc;       ///< Number of received Telecommands
-    int32_t dat_com_last_tc;        ///< Unix time of the last received Telecommand
+    uint32_t dat_com_count_tm;       ///< Number of Telemetries sent
+    uint32_t dat_com_count_tc;       ///< Number of received Telecommands
+    uint32_t dat_com_last_tc;        ///< Unix time of the last received Telecommand
     uint32_t dat_com_freq;          ///< Communications frequency [Hz]
     uint32_t dat_com_tx_pwr;        ///< TX power (0: 25dBm, 1: 27dBm, 2: 28dBm, 3: 30dBm)
     uint32_t dat_com_baud;          ///< Baudrate [bps]
@@ -173,32 +175,32 @@ typedef struct __attribute__((packed)) dat_status_s {
     uint32_t dat_com_bcn_period;    ///< Number of seconds between beacon packets
 
     /// FPL: flight plant related variables
-    int32_t dat_fpl_last;           ///< Last executed flight plan (unix time)
-    int32_t dat_fpl_queue;          ///< Flight plan queue length
+    uint32_t dat_fpl_last;           ///< Last executed flight plan (unix time)
+    uint32_t dat_fpl_queue;          ///< Flight plan queue length
 
     /// ADS: Attitude determination system
-    float dat_ads_acc_x;            ///< Gyroscope acceleration value along the x axis
-    float dat_ads_acc_y;            ///< Gyroscope acceleration value along the y axis
-    float dat_ads_acc_z;            ///< Gyroscope acceleration value along the z axis
-    float dat_tgt_acc_x;            ///< Target acceleration value along the x axis
-    float dat_tgt_acc_y;            ///< Target acceleration value along the y axis
-    float dat_tgt_acc_z;            ///< Target acceleration value along the z axis
-    float dat_ads_mag_x;            ///< Magnetometer value along the x axis
-    float dat_ads_mag_y;            ///< Magnetometer value along the y axis
-    float dat_ads_mag_z;            ///< Magnetometer value along the z axis
+//    float dat_ads_acc_x;            ///< Gyroscope acceleration value along the x axis
+//    float dat_ads_acc_y;            ///< Gyroscope acceleration value along the y axis
+//    float dat_ads_acc_z;            ///< Gyroscope acceleration value along the z axis
+//    float dat_tgt_acc_x;            ///< Target acceleration value along the x axis
+//    float dat_tgt_acc_y;            ///< Target acceleration value along the y axis
+//    float dat_tgt_acc_z;            ///< Target acceleration value along the z axis
+//    float dat_ads_mag_x;            ///< Magnetometer value along the x axis
+//    float dat_ads_mag_y;            ///< Magnetometer value along the y axis
+//    float dat_ads_mag_z;            ///< Magnetometer value along the z axis
     float dat_ads_pos_x;            ///< Satellite orbit position x (ECI)
     float dat_ads_pos_y;            ///< Satellite orbit position y (ECI)
     float dat_ads_pos_z;            ///< Satellite orbit position z (ECI)
-    int32_t dat_ads_tle_epoch;      ///< Current TLE epoch, 0 if TLE is invalid
-    int32_t  dat_ads_tle_last;      ///< Las time position was propagated
-    float dat_ads_q0;               ///< Attitude quaternion (Inertial to body)
-    float dat_ads_q1;               ///< Attitude quaternion (Inertial to body)
-    float dat_ads_q2;               ///< Attitude quaternion (Inertial to body)
-    float dat_ads_q3;               ///< Attitude quaternion (Inertial to body)
-    float dat_tgt_q0;               ///< Target quaternion (Inertial to body)
-    float dat_tgt_q1;               ///< Target quaternion (Inertial to body)
-    float dat_tgt_q2;               ///< Target quaternion (Inertial to body)
-    float dat_tgt_q3;               ///< Target quaternion (Inertial to body)
+    uint32_t dat_ads_tle_epoch;      ///< Current TLE epoch, 0 if TLE is invalid
+    uint32_t  dat_ads_tle_last;      ///< Las time position was propagated
+//    float dat_ads_q0;               ///< Attitude quaternion (Inertial to body)
+//    float dat_ads_q1;               ///< Attitude quaternion (Inertial to body)
+//    float dat_ads_q2;               ///< Attitude quaternion (Inertial to body)
+//    float dat_ads_q3;               ///< Attitude quaternion (Inertial to body)
+//    float dat_tgt_q0;               ///< Target quaternion (Inertial to body)
+//    float dat_tgt_q1;               ///< Target quaternion (Inertial to body)
+//    float dat_tgt_q2;               ///< Target quaternion (Inertial to body)
+//    float dat_tgt_q3;               ///< Target quaternion (Inertial to body)
 
     /// EPS: Energy power system
     uint32_t dat_eps_vbatt;         ///< Voltage of battery [mV]
@@ -340,7 +342,7 @@ typedef union fvalue{
 #define DAT_CPY_SYSTEM_VAR_F(st, var) {fvalue_t v; v.i = (float)dat_get_system_var(var); st->var = v.f;}
 
 /** Print the name and value of a integer system status variable */
-#define DAT_PRINT_SYSTEM_VAR(st, var) printf("\t%s: %lu\n", #var, (unsigned long)st->var)
+#define DAT_PRINT_SYSTEM_VAR(st, var) printf("\t%s: %lu\n", #var, (unsigned long)(st->var))
 
 /** Print the name and vale of a float system status variable */
 #define DAT_PRINT_SYSTEM_VAR_F(st, var) printf("\t%s: %f\n", #var, st->var)

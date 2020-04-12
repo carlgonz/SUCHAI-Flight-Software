@@ -29,7 +29,7 @@ int osQueueReceive(osQueue queue, void *buf, uint32_t timeout);
 //int os_queue_enqueue_isr(csp_queue_handle_t handle, void * value, CSP_BASE_TYPE * task_woken);
 //int os_queue_dequeue(csp_queue_handle_t handle, void *buf, uint32_t timeout);
 //int os_queue_dequeue_isr(csp_queue_handle_t handle, void * buf, CSP_BASE_TYPE * task_woken);
-//int os_queue_size(csp_queue_handle_t handle);
+int osQueueSize(osQueue queue);
 //int os_queue_size_isr(csp_queue_handle_t handle);
 
 #endif

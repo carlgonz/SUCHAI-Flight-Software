@@ -43,7 +43,7 @@ typedef struct __attribute__((__packed__)) com_frame{
      * inside the buffer depends on the telemetry @type.
      */
     union{
-        uint8_t data8[COM_FRAME_MAX_LEN];
+        uint8_t data8[COM_FRAME_MAX_LEN];  ///< 192 bytes
         uint16_t data16[COM_FRAME_MAX_LEN / sizeof(uint16_t)];
         uint32_t data32[COM_FRAME_MAX_LEN / sizeof(uint32_t)];
     }data;

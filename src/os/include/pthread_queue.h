@@ -51,6 +51,7 @@ typedef struct os_thread_queue_s {
 os_pthread_queue_t * os_pthread_queue_create(int length, size_t item_size);
 int os_pthread_queue_send(os_pthread_queue_t *queue, void *value, uint32_t timeout);
 int os_pthread_queue_receive(os_pthread_queue_t *queue, void *buf, uint32_t timeout);
+int os_pthread_queue_size(os_pthread_queue_t *queue);
 
 #endif 
 

@@ -29,12 +29,14 @@ void taskDispatcher(void *param)
     int status; /* Status of cmd reading operation */
 
     cmd_t *new_cmd = NULL; /* The new cmd read */
-    int cmd_result;
+    int cmd_result, qsize;
 
     while(1)
     {
         /* Read new_cmd from Queue - Blocking */
         status = osQueueReceive(dispatcher_queue, &new_cmd, portMAX_DELAY);
+        qsize = osQueueSize(dispatcher_queue);
+        dat_set_system_var(dat_obc_reset_counter, qsize);
 
         if(status == pdPASS)
         {

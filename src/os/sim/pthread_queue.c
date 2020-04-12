@@ -141,3 +141,10 @@ int os_pthread_queue_receive(os_pthread_queue_t *queue, void *buf,
 	
 }
 
+int os_pthread_queue_size(os_pthread_queue_t *queue)
+{
+    pthread_mutex_lock(&(queue->mutex));
+    int size = queue->items;
+    pthread_mutex_unlock(&(queue->mutex));
+    return size;
+}

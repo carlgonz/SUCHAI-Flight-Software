@@ -34,3 +34,7 @@ int osQueueReceive(osQueue queue, void * buf, uint32_t timeout){
     return os_pthread_queue_receive(queue, buf, timeout);
 }
 
+int osQueueSize(osQueue queue)
+{
+	return os_pthread_queue_size(queue);
+}
