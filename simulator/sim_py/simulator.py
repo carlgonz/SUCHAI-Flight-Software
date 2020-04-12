@@ -108,7 +108,7 @@ if __name__ == "__main__":
 
     # Set up TLE
     tles = pd.read_csv("starlink.csv")
-    tles = tles.sample(n=args.nodes, random_state=1)
+    tles = tles.sample(n=args.nodes, random_state=2)
     print(tles)
     for n in nodes:
         tle = tles.iloc[n-1]

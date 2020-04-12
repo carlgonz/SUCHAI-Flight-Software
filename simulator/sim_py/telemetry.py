@@ -101,7 +101,7 @@ class Telemetry(object):
 class StatusTelemetry(Telemetry):
     def __init__(self):
         Telemetry.__init__(self)
-        self.fmt = '6i3f14i3f20i'
+        self.fmt = '7i3f14i3f20i'
         self.names = (
             "node",
             "dat_obc_opmode",           # General operation mode
@@ -110,6 +110,7 @@ class StatusTelemetry(Telemetry):
             "dat_obc_hrs_wo_reset",         # Hours since last reset
             "dat_obc_reset_counter",        # Number of reset since first boot
             "dat_obc_sw_wdt",               # Software watchdog timer counter
+            "dat_obc_cmd_queue",            # Command queue size
             "dat_obc_temp_1",               # Temperature value of the first sensor
             "dat_obc_temp_2",               # Temperature value of the second sensor
             "dat_obc_temp_3",               # Temperature value of the gyroscope

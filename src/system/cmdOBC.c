@@ -181,24 +181,16 @@ int obc_set_tick(char* fmt, char* params,int nparams)
 
 int obc_set_time(char* fmt, char* params,int nparams)
 {
-    if(params == NULL)
-    {
-        LOGE(tag, "Parameter null");
-        return CMD_FAIL;
-    }
+
     int time_to_set;
-    if(sscanf(params, fmt, &time_to_set) == nparams){
-        int rc = dat_set_time(time_to_set);
-        if (rc == 0)
-            return CMD_OK;
-        else
-            return CMD_FAIL;
-    }
+    if(params == NULL || sscanf(params, fmt, &time_to_set) != nparams)
+        return CMD_ERROR;
+
+    int rc = dat_set_time(time_to_set);
+    if (rc == 0)
+        return CMD_OK;
     else
-    {
-        LOGW(tag, "set_time used with invalid params: %s", params);
         return CMD_FAIL;
-    }
 }
 
 int obc_get_time(char *fmt, char *params, int nparams)

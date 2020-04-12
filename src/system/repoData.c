@@ -465,6 +465,7 @@ int dat_set_time(int new_time)
     return 0;
 #elif defined(SIMULATOR)
     sec = (time_t)new_time;
+    return 0;
 #elif defined(LINUX)
     // TODO: This needs to be tested on a raspberry LINUX system, to see if the
     //  sudo call asks for permissions or not
