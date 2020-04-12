@@ -19,7 +19,7 @@
 
 #include "osDelay.h"
 
-static portTick ticks_us;
+static portTick ticks_us = 0;
 pthread_cond_t delay_cond = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t tick_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -32,7 +32,10 @@ portTick osDefineTime(uint32_t mseconds)
 portTick osTaskGetTickCount(void)
 {
     // Return current system ticks (us)
-    return (portTick)(ticks_us);
+    pthread_mutex_lock(&tick_mutex);
+    portTick t = ticks_us;
+    pthread_mutex_unlock(&tick_mutex);
+    return t;
 }
 
 void osTaskSetTickCount(portTick new_tick_us)

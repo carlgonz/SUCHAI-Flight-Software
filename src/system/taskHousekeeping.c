@@ -26,8 +26,7 @@ void taskHousekeeping(void *param)
 {
     LOGI(tag, "Started");
 
-    portTick delay_ms    = 1000;            //Task period in [ms]
-
+    uint32_t delay_ms = 1000;               //Task period in [ms]
     unsigned int elapsed_sec = 1;           // Seconds counter
     unsigned int _adcs_ctrl_period = 1;     // ADCS control period in seconds
     unsigned int _10sec_check = 10;         // 10[s] condition
@@ -54,10 +53,10 @@ void taskHousekeeping(void *param)
     while(1)
     {
         osTaskDelayUntil(&xLastWakeTime, delay_ms); //Suspend task
-        elapsed_sec += delay_ms / 1000; //Update seconds counts
 
         /* 1 second actions */
-        dat_set_system_var(dat_rtc_date_time, (int) time(NULL));
+        elapsed_sec += 1; //Update seconds counts
+        dat_set_system_var(dat_rtc_date_time, (int)dat_get_time());
 
         /**
          * Control LOOP

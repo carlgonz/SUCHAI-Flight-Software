@@ -20,7 +20,7 @@
     #include <unistd.h>
     #include <sys/time.h>
     #include <pthread.h>
- 	typedef  __useconds_t portTick; // Always useconds (uint32_t)
+ 	typedef  uint64_t portTick; // Always useconds (uint32_t) FIXME: uint32t -> MAX 4294 seconds!!!!
 #else
 	#include "FreeRTOS.h"
 	#include "task.h"

@@ -25,7 +25,7 @@ void taskWatchdog(void *param)
 {
     LOGI(tag, "Started");
 
-    portTick delay_ms    = 1000;        //Task period in [ms]
+    uint32_t delay_ms = 1000;                         //Task period in [ms]
     unsigned int max_obc_wdt = SCH_MAX_WDT_TIMER;     // Seconds to send "reset_wdt" command
     unsigned int max_gnd_wdt = SCH_MAX_GND_WDT_TIMER; // Seconds to send "reset" command
     unsigned int elapsed_obc_timer = 0; // OBC timer counter
@@ -37,7 +37,7 @@ void taskWatchdog(void *param)
         // Sleep task to count seconds
         osTaskDelayUntil(&xLastWakeTime, delay_ms);
         elapsed_obc_timer++; // Increase timer to reset the obc wdt
-        elapsed_sw_timer = (unsigned  int)dat_get_system_var(dat_obc_sw_wdt) + 1; //Increase software timer counter. Should be cleared by a gnd command
+        elapsed_sw_timer = (unsigned int)dat_get_system_var(dat_obc_sw_wdt) + 1; //Increase software timer counter. Should be cleared by a gnd command
         dat_set_system_var(dat_obc_sw_wdt, (int)elapsed_sw_timer); // Save increased software timer
 
         // Periodically reset the OBC watchdog

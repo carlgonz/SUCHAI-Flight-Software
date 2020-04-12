@@ -107,7 +107,7 @@ int run(time_t start, unsigned int seconds, int dt_s)
 {
     int current_s = 0;
     int current_ms = 0;
-    int tick_ms = 0;
+    uint64_t tick_ms = 0;
     double progress = 0.0;
     time_t current_time = start;
 
@@ -121,9 +121,11 @@ int run(time_t start, unsigned int seconds, int dt_s)
             pre_tick_hook();
             osTaskSetTickCount(1000*tick_ms++); // Tick in us
             pos_tick_hook();
+            struct timespec dt = {(time_t)0, (long)10};
+            nanosleep(&dt, NULL);
         }
 
-        current_time += dt_s;
+        time_t current_time = dat_get_time() + dt_s;
         dat_set_time(current_time);
     }
 

@@ -35,7 +35,7 @@ int osCreateTask(void (*functionTask)(void *), char* name, unsigned short size, 
     // Set Real Time scheduling and thread priority
     // Only with proper permissions
     const struct sched_param _priority = {(int) priority};
-    if(pthread_setschedparam(*thread, SCHED_FIFO, &_priority) != 0)
+    if(pthread_setschedparam(*thread, SCHED_RR, &_priority) != 0)
         printf("[WARN] (%s) Failed to assign task priority, try as root\n", name);
 
     pthread_attr_destroy(&attr);
