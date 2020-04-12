@@ -24,19 +24,19 @@
 #include "repoData.h"
 
 static const char *tag = "repoData";
-char* table = "flightPlan";
+static char* table = "flightPlan";
 #if defined(AVR32) || defined(SIMULATOR)
-time_t sec = 0;
+static time_t sec = 0;
 #endif
 
 
 #if SCH_STORAGE_MODE == 0
+static fp_entry_t data_base [SCH_FP_MAX_ENTRIES];
 #if SCH_STORAGE_TRIPLE_WR == 1
-        int DAT_SYSTEM_VAR_BUFF[dat_system_last_var*3];
-    #else
-        int DAT_SYSTEM_VAR_BUFF[dat_system_last_var];
-    #endif
-    fp_entry_t data_base [SCH_FP_MAX_ENTRIES];
+static int DAT_SYSTEM_VAR_BUFF[dat_system_last_var*3];
+#else
+static int DAT_SYSTEM_VAR_BUFF[dat_system_last_var];
+#endif
 #endif
 
 sample_machine_t machine;
@@ -79,7 +79,7 @@ void dat_repo_init(void)
         int i;
         for(i=0;i<SCH_FP_MAX_ENTRIES;i++)
         {
-            data_base[i].unixtime = 0;
+            data_base[i].unixtime = -1;
             data_base[i].cmd = NULL;
             data_base[i].args = NULL;
             data_base[i].executions = 0;
@@ -264,7 +264,7 @@ static int _dat_set_fp_async(int timetodo, char* command, char* args, int execut
     int i;
     for(i = 0;i < SCH_FP_MAX_ENTRIES;i++)
     {
-        if(data_base[i].unixtime == 0)
+        if(data_base[i].unixtime == -1)
         {
             data_base[i].unixtime = timetodo;
             data_base[i].executions = executions;
@@ -290,7 +290,7 @@ static int _dat_del_fp_async(int timetodo)
     {
         if(timetodo == data_base[i].unixtime)
         {
-            data_base[i].unixtime = 0;
+            data_base[i].unixtime = -1;
             data_base[i].executions = 0;
             data_base[i].periodical = 0;
             free(data_base[i].args);
@@ -328,8 +328,11 @@ int dat_get_fp(int elapsed_sec, char* command, char* args, int* executions, int*
     rc = -1;  // not found by default
     for(i = 0;i < SCH_FP_MAX_ENTRIES;i++)
     {
+        assert(elapsed_sec != -1);
         if(elapsed_sec == data_base[i].unixtime)
         {
+            assert(data_base[i].cmd != NULL);
+            assert(data_base[i].args != NULL);
             strcpy(command, data_base[i].cmd);
             strcpy(args,data_base[i].args);
             *executions = data_base[i].executions;
@@ -377,7 +380,7 @@ int dat_reset_fp(void)
     int i;
     for(i=0;i<SCH_FP_MAX_ENTRIES;i++)
     {
-        data_base[i].unixtime = 0;
+        data_base[i].unixtime = -1;
         data_base[i].cmd = NULL;
         data_base[i].args = NULL;
         data_base[i].executions = 0;
@@ -404,7 +407,7 @@ int dat_show_fp (void)
 
     for(i = 0;i < SCH_FP_MAX_ENTRIES; i++)
     {
-        if(data_base[i].unixtime!=0)
+        if(data_base[i].unixtime != -1)
         {
             if(cont == 0)
             {
@@ -450,6 +453,7 @@ int dat_update_time(void)
 
 int dat_set_time(int new_time)
 {
+    assert(new_time != -1);
 #if defined(AVR32)
     sec = (time_t)new_time;
     return 0;
