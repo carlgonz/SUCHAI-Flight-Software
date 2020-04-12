@@ -12,87 +12,31 @@
 #ifndef _CMDSIM_H
 #define _CMDSIM_H
 
-#include "csp/csp.h"
+#define SIM_STOP 0
+#define SIM_RUN 1
+
+#include "pthread.h"
 
 #include "repoData.h"
 #include "repoCommand.h"
-#include "cmdCOM.h"
 
 void cmd_sim_init(void);
 
 /**
- * Send "adcs_point_to <x> <y> <z>" command to the ADCS system with current
- * position vector.
- *
- * @param fmt ""
- * @param params ""
- * @param nparams 0
- * @return CMD_OK | CMD_FAIL | CMD_ERROR
+ * Wait the simulation change to the given status. Blocking.
+ * @param state
  */
-int sim_adcs_point(char* fmt, char* params, int nparams);
+void _sim_wait_state(int state);
+int _sim_get_state(void);
 
 /**
- * Read current spacecraft quaternion from the ADCS/STT
- * @param fmt ""
- * @param params ""
- * @param nparams 0
- * @return CMD_OK | CMD_FAIL | CMD_ERROR
+ * Set simulation state to running (1)
  */
-int sim_adcs_get_quaternion(char* fmt, char* params, int nparams);
+int sim_start(char* fmt, char* params, int nparams);
 
 /**
- * Read current accelerations from ADCS
- * @param fmt ""
- * @param params ""
- * @param nparams 0
- * @return
+ * Set simulation state to stop (0)
  */
-int sim_adcs_get_acc(char* fmt, char* params, int nparams);
-
-/**
- * Read current magnetic sensors from ADCS
- * @param fmt ""
- * @param params ""
- * @param nparams 0
- * @return
- */
-int sim_adcs_get_mag(char* fmt, char* params, int nparams);
-
-/**
- *
- * @param fmt
- * @param params
- * @param nparams
- * @return
- */
-int sim_adcs_control_torque(char* fmt, char* params, int nparams);
-
-/**
- * Set ADCS vector (Intertial frame) and velocity (body frame) targets
- * @param fmt "%lf lf lf lf lf lf"
- * @param params "<x y z> <wx wy wz>"
- * @param nparams 6
- * @return CMD_OK | CMD_ERROR | CMD_FAIL
- */
-int sim_adcs_set_target(char* fmt, char* params, int nparams);
-
-/**
- * Set ADCS target to Nadir based on current quaternion and position
- * Uses sim_adcs_set_target
- * @param fmt ""
- * @param params ""
- * @param nparams 0
- * @return CMD_OK | CMD_ERROR | CMD_FAIL
- */
-int sim_adcs_target_nadir(char* fmt, char* params, int nparams);
-
-/**
- * Send current attitude variables to ADCS system. For testing purposes.
- * @param fmt ""
- * @param params ""
- * @param nparams 0
- * @return CMD_OK | CMD_ERROR | CMD_FAIL
- */
-int sim_adcs_send_attitude(char* fmt, char* params, int nparams);
+int sim_stop(char* fmt, char* params, int nparams);
 
 #endif //_CMDSIM_H

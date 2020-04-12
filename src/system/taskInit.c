@@ -141,7 +141,7 @@ void init_communications(void)
      * Set interfaces and routes
      *  Platform dependent
      */
-#ifdef SIMULATOR
+#if 0 //def SIMULATOR
     csp_if_queue_tx = osQueueCreate(100, sizeof(csp_packet_t*));
     csp_route_set(CSP_DEFAULT_ROUTE, &csp_if_queue, CSP_NODE_MAC);
 #endif

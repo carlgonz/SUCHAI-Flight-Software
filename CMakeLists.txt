@@ -25,6 +25,8 @@ set(SOURCE_FILES
         src/system/cmdEPS.c
         src/system/cmdConsole.c
         src/system/cmdSensors.c
+#        simulator/src/system/cmdADCS.c
+        simulator/src/system/cmdSIM.c
         src/system/repoCommand.c
         src/system/repoData.c
         src/system/repoDataSchema.c
@@ -42,6 +44,7 @@ set(SOURCE_FILES
 
 include_directories(
         src/system/include/
+        simulator/src/system/include/
         src/os/include
         src/drivers/simulator/sgp4/src/c
         src/drivers/simulator/linenoise

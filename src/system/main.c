@@ -25,13 +25,21 @@
 #include "main.h"
 #include "osDelay.h"
 #include "repoData.h"
+#include "cmdSIM.h"
 #include "pthread.h"
 
 const char *tag = "main";
 
 void pre_tick_hook(void);
 void pos_tick_hook(void);
-int run(time_t start, unsigned int seconds, int dt_s);
+void run(void *params);
+
+double _clock(void)
+{
+    struct timespec now;
+    clock_gettime(CLOCK_REALTIME, &now);
+    return now.tv_sec + now.tv_nsec*1e-9;
+}
 
 int main(int argc, char **argv)
 {
@@ -48,6 +56,7 @@ int main(int argc, char **argv)
     /* Init software subsystems */
     log_init(LOG_LEVEL, -1);      // Logging system
     cmd_repo_init(); // Command repository initialization
+    cmd_sim_init();
     dat_repo_init(); // Update status repository
 
     /* Initializing shared Queues */
@@ -59,14 +68,14 @@ int main(int argc, char **argv)
     if(executer_stat_queue == 0) LOGE(tag, "Error creating executer stat queue");
     if(executer_cmd_queue == 0) LOGE(tag, "Error creating executer cmd queue");
 
-    int n_threads = 4;
+    int n_threads = 5;
     os_thread threads_id[n_threads];
 
     LOGI(tag, "Creating basic tasks...");
     /* Crating system task (the others are created inside taskInit) */
-    int t_inv_ok = osCreateTask(taskDispatcher,"invoker", SCH_TASK_DIS_STACK, NULL, 3, &threads_id[1]);
-    int t_exe_ok = osCreateTask(taskExecuter, "receiver", SCH_TASK_EXE_STACK, NULL, 4, &threads_id[2]);
-    int t_wdt_ok = osCreateTask(taskWatchdog, "watchdog", SCH_TASK_WDT_STACK, NULL, 2, &threads_id[0]);
+    int t_inv_ok = osCreateTask(taskDispatcher,"invoker", SCH_TASK_DIS_STACK, NULL, 3, &threads_id[0]);
+    int t_exe_ok = osCreateTask(taskExecuter, "receiver", SCH_TASK_EXE_STACK, NULL, 4, &threads_id[1]);
+    int t_wdt_ok = osCreateTask(taskWatchdog, "watchdog", SCH_TASK_WDT_STACK, NULL, 2, &threads_id[2]);
     int t_ini_ok = osCreateTask(taskInit, "init", SCH_TASK_INI_STACK, NULL, 3, &threads_id[3]);
 
     /* Check if the task were created */
@@ -86,8 +95,11 @@ int main(int argc, char **argv)
      * seconds: total simulation time in seconds
      * dt_s: simulation time increment in seconds
      */
-    int rc = run(time(NULL), 120, 1);
-    exit(rc);
+     osCreateTask(run, "run", SCH_TASK_DEF_STACK, NULL, 1, &threads_id[4]);
+     pthread_join(threads_id[4], NULL);
+//    int rc = run(0, 1200, 1);
+//    osScheduler(threads_id, n_threads);
+    exit(0);
 #else
     osScheduler(threads_id, n_threads);
     exit(0);
@@ -103,18 +115,22 @@ int main(int argc, char **argv)
  * @param dt_s Outer loop resolution
  * @return 0
  */
-int run(time_t start, unsigned int seconds, int dt_s)
+void run(void *params)
 {
     int current_s = 0;
     int current_ms = 0;
     uint64_t tick_ms = 0;
     double progress = 0.0;
-    time_t current_time = start;
+    int dt_s = 1;
 
-    for(current_s = 0; current_s < seconds; current_s+=dt_s)
+    // Wait until an extern start the simulation
+    _sim_wait_state(SIM_RUN);
+//    sim_start("", "", 0);
+    double t_ini = _clock();
+    for(current_s = 0; _sim_get_state() == SIM_RUN; current_s+=dt_s)
     {
-        progress = 100.0*current_s/seconds;
-        LOGI(tag, "Progress: %0.01f%%...", progress);
+        if(current_s % 60 == 0)
+            LOGI(tag, "Progress: %d s...", current_s);
 
         for(current_ms = 0; current_ms < 1000*dt_s; current_ms++)
         {
@@ -128,8 +144,14 @@ int run(time_t start, unsigned int seconds, int dt_s)
         time_t current_time = dat_get_time() + dt_s;
         dat_set_time(current_time);
     }
+    double t_end = _clock();
+    LOGI(tag, "Execution time: %.6lf s.", t_end - t_ini);
 
-    return 0;
+    _sim_wait_state(SIM_STOP);
+    cmd_t *cmd_stop = cmd_get_str("obc_reset");
+    cmd_send(cmd_stop);
+
+//    return 0;
 }
 
 /**
@@ -139,6 +161,7 @@ int run(time_t start, unsigned int seconds, int dt_s)
 void pre_tick_hook(void)
 {
     //TODO: Put messages into the FS
+
 };
 
 /**
@@ -147,14 +170,14 @@ void pre_tick_hook(void)
  */
 void pos_tick_hook(void)
 {
-    extern osQueue csp_if_queue_tx;  // Defined in taskInit.c
-    csp_packet_t *buff;
-    int rc = osQueueReceive(csp_if_queue_tx, &buff, 0);
-
-    if(rc > 0) {
-      printf("OUT: "); print_buff(buff->data, buff->length);
-      csp_buffer_free(buff);
-    }
+//    extern osQueue csp_if_queue_tx;  // Defined in taskInit.c
+//    csp_packet_t *buff;
+//    int rc = osQueueReceive(csp_if_queue_tx, &buff, 0);
+//
+//    if(rc > 0) {
+//      printf("OUT: "); print_buff(buff->data, buff->length);
+//      csp_buffer_free(buff);
+//    }
 };
 
 /* FreeRTOS Hooks */

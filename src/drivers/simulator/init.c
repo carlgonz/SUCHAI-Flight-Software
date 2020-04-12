@@ -22,13 +22,14 @@
 
 static const char *tag = "on_reset";
 
-void on_close(int signal)
+void on_close(int _signal)
 {
     dat_repo_close();
     cmd_repo_close();
 
     LOGI(tag, "Exit system!");
-    exit(signal);
+    signal(_signal, SIG_DFL);
+    kill(getpid(), _signal);
 }
 
 void on_reset(void)
@@ -45,25 +46,25 @@ void load_config(int argc, char **argv)
     SCH_COMM_ZMQ_OUT = _SCH_COMM_ZMQ_OUT;
     SCH_COMM_ZMQ_IN = _SCH_COMM_ZMQ_IN;
 
-    if(argc > 2)
-    {
-        SCH_COMM_ZMQ_IN = argv[1];
-        SCH_COMM_ZMQ_OUT = argv[2];
-    }
-    printf("ZMQ: %s; %s\n", SCH_COMM_ZMQ_IN, SCH_COMM_ZMQ_OUT);
+//    if(argc > 2)
+//    {
+//        SCH_COMM_ZMQ_IN = argv[1];
+//        SCH_COMM_ZMQ_OUT = argv[2];
+//    }
+//    printf("ZMQ: %s; %s\n", SCH_COMM_ZMQ_IN, SCH_COMM_ZMQ_OUT);
 
     SCH_DEVICE_ID = _SCH_DEVICE_ID;
     SCH_EPS_ADDRESS = _SCH_EPS_ADDRESS;
     SCH_TRX_ADDRESS = _SCH_TRX_ADDRESS;
     SCH_TNC_ADDRESS = _SCH_TNC_ADDRESS;
-    if(argc > 6)
+    if(argc > 1)
     {
-        SCH_DEVICE_ID = (int)strtol(argv[3], NULL, 10);
-        SCH_EPS_ADDRESS = (int)strtol(argv[6], NULL, 10);
-        SCH_TRX_ADDRESS = (int)strtol(argv[5], NULL, 10);
-        SCH_TNC_ADDRESS = (int)strtol(argv[4], NULL, 10);
+        SCH_DEVICE_ID = (int)strtol(argv[1], NULL, 10);
+//        SCH_EPS_ADDRESS = (int)strtol(argv[2], NULL, 10);
+//        SCH_TRX_ADDRESS = (int)strtol(argv[3], NULL, 10);
+//        SCH_TNC_ADDRESS = (int)strtol(argv[4], NULL, 10);
     }
-    printf("OBC: %d, EPS: %d, TRX: %d, TNC: %d", SCH_DEVICE_ID,
-           SCH_EPS_ADDRESS, SCH_TRX_ADDRESS, SCH_TNC_ADDRESS);
+//    printf("OBC: %d, EPS: %d, TRX: %d, TNC: %d", SCH_DEVICE_ID,
+//           SCH_EPS_ADDRESS, SCH_TRX_ADDRESS, SCH_TNC_ADDRESS);
 
 }
