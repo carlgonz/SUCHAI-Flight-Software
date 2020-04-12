@@ -203,10 +203,21 @@ int com_send_data(char *fmt, char *params, int nparams)
     uint8_t rep[1] = {0};
     com_data_t *data_to_send = (com_data_t *)params;
 
+#ifndef SIMULATOR
     // Send the data buffer to node and wait 1 seg. for the confirmation
     int rc = csp_transaction(CSP_PRIO_NORM, data_to_send->node, SCH_TRX_PORT_TM,
                              1000, &(data_to_send->frame),
                              sizeof(data_to_send->frame), rep, 1);
+#else
+    // Send the data buffer to node but DO NOT WAIT for the confirmation
+    rep[0] = 200;
+    int rc = csp_transaction(CSP_PRIO_NORM, data_to_send->node, SCH_TRX_PORT_TM,
+                             1, &(data_to_send->frame),
+                             sizeof(data_to_send->frame), NULL, 0);
+#endif
+
+    // Update TM counter
+    dat_set_system_var(dat_com_count_tm, dat_get_system_var(dat_com_count_tm)+1);
 
     if(rc > 0 && rep[0] == 200)
     {
