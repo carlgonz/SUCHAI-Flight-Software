@@ -19,6 +19,8 @@ class StopedException(Exception):
 
 
 class CspHeader(object):
+    next_port = 0
+
     def __init__(self, src_node=None, dst_node=None, src_port=None, dst_port=None, prio=2, hdr_bytes=None):
         """
         Represents a CSP header
@@ -29,9 +31,13 @@ class CspHeader(object):
         :param prio: Int.
         :param hdr_bytes: Bytes.
         """
+        if src_port is None:
+            src_port = CspHeader.next_port % 16 + 48
+            CspHeader.next_port += 1
+
         self.src_node = src_node
         self.dst_node = dst_node
-        self.src_port = src_port if src_port is not None else randint(48, 63)
+        self.src_port = src_port
         self.dst_port = dst_port
         self.prio = prio
         self.hmac = False

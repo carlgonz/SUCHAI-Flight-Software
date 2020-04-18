@@ -59,11 +59,11 @@ void taskCommunications(void *param)
     {
         /* CSP SERVER */
         /* Wait for connection, 1000 ms timeout */
-        if((conn = csp_accept(sock, 1000)) == NULL)
+        if((conn = csp_accept(sock, 10)) == NULL)
             continue; /* Try again later */
 
         /* Read packets. Timeout is 500 ms */
-        while ((packet = csp_read(conn, 500)) != NULL)
+        while ((packet = csp_read(conn, 5)) != NULL)
         {
             count_tc = dat_get_system_var(dat_com_count_tc) + 1;
             dat_set_system_var(dat_com_count_tc, count_tc);
