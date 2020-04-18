@@ -124,7 +124,8 @@ if __name__ == "__main__":
     simulator.send_command("obc_set_time "+str(now))
 
     # Start simulation
-    simulator.send_command("sim_start")
+    simulator.send_command("sim_start {}".format(int(time.time())+3))
+    # simulator.send_command("sim_start")
     try:
         time.sleep(args.time)
     except KeyboardInterrupt:

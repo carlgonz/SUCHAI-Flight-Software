@@ -23,12 +23,13 @@
 
 static const char* tag = "cmdSIM";
 static int sim_running = 0;
+static time_t  sim_start_time = 0;
 static pthread_cond_t sim_running_cond = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t sim_running_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void cmd_sim_init(void)
 {
-    cmd_add("sim_start", sim_start, "", 0);
+    cmd_add("sim_start", sim_start, "%ld", 1);
     cmd_add("sim_stop", sim_stop, "", 0);
 }
 
@@ -37,7 +38,12 @@ void _sim_wait_state(int state)
     pthread_mutex_lock(&sim_running_mutex);
     while(state != sim_running)
         pthread_cond_wait(&sim_running_cond, &sim_running_mutex);
+    time_t now = time(NULL);
+    time_t dt_s = sim_start_time - now;
     pthread_mutex_unlock(&sim_running_mutex);
+    LOGI(tag, "Starting in %d s...", dt_s);
+    if(dt_s > 0)
+        sleep((unsigned int)dt_s);
 }
 
 int _sim_get_state(void)
@@ -50,8 +56,13 @@ int _sim_get_state(void)
 
 int sim_start(char* fmt, char* params, int nparams)
 {
+    time_t start_time;
+    if(params == NULL || sscanf(params, fmt, &start_time) != nparams)
+        start_time = time(NULL);
+
     pthread_mutex_lock(&sim_running_mutex);
     sim_running = SIM_RUN;
+    sim_start_time = start_time;
     pthread_cond_broadcast(&sim_running_cond);
     pthread_mutex_unlock(&sim_running_mutex);
     return CMD_OK;
