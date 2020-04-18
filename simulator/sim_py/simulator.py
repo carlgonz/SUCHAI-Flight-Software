@@ -108,17 +108,19 @@ if __name__ == "__main__":
 
     # Set up TLE
     tles = pd.read_csv("starlink.csv")
-    tles = tles.sample(n=args.nodes, random_state=2)
+    tles = tles.sample(n=args.nodes, random_state=5)
     print(tles)
     for n in nodes:
         tle = tles.iloc[n-1]
         tle1, tle2 = tle[["tle1", "tle2"]]
+        # simulator.send_command("obc_set_tle "+tle1 +";"+"obc_set_tle "+tle2+";"+"obc_update_tle", [n])
         simulator.send_command("obc_set_tle "+tle1, [n])
         simulator.send_command("obc_set_tle "+tle2, [n])
         simulator.send_command("obc_update_tle", [n])
 
     # Set up date
-    now = int(time.time())
+    # now = int(time.time())
+    now = 1587160800
     simulator.send_command("obc_set_time "+str(now))
 
     # Start simulation

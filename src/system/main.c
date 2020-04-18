@@ -145,7 +145,9 @@ void run(void *params)
         dat_set_time(current_time);
     }
     double t_end = _clock();
-    LOGI(tag, "Execution time: %.6lf s.", t_end - t_ini);
+    LOGI(tag, "Execution  time: %.6lf s.", t_end - t_ini);
+    LOGI(tag, "Simulation time: %d s.", current_s);
+    LOGI(tag, "Simulation rate: %.4lfX", current_s/(t_end - t_ini));
 
     _sim_wait_state(SIM_STOP);
     cmd_t *cmd_stop = cmd_get_str("obc_reset");

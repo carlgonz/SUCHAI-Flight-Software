@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import sys
 import glob
 import pandas as pd
@@ -21,4 +22,5 @@ gl.ylabels_right = False
 gl.xformatter = LONGITUDE_FORMATTER
 gl.yformatter = LATITUDE_FORMATTER
 plt.scatter(df['dat_ads_lon'], df['dat_ads_lat'], c=df['node'])
+plt.title(filename)
 plt.show()
