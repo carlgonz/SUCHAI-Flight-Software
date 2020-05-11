@@ -23,7 +23,7 @@ def map_plot(df, lat='lat', lon='lon', sats=None):
     gl.ylabels_right = False
     gl.xformatter = LONGITUDE_FORMATTER
     gl.yformatter = LATITUDE_FORMATTER
-    # plt.title(filename)
+    plt.title("Satellite tracks and accesses")
 
     for i, (name, sat) in enumerate(df.groupby('name')):
         ax.scatter(sat[lon], sat[lat], c=sat[[n for n in sats if n != name]].sum(axis=1)>0)
@@ -73,61 +73,54 @@ def get_parameters():
     return parser.parse_args()
 
 
-if __name__ == "__main__":
-    args = get_parameters()
+def generate_contact_plan(nodes, start, sim_time, dt):
     # Set up TLE
     tles = pd.read_csv("starlink.csv")
-    tles = tles.sample(n=args.nodes, random_state=5)
+    tles = tles.sample(n=nodes, random_state=5)
     print(tles)
-
     stations = {"stgo": Topos(latitude_degrees=-33.3833, longitude_degrees=-70.7833, elevation_m=476),
                 "tokyo": Topos(latitude_degrees=35.6830, longitude_degrees=139.7670, elevation_m=5)}
-
-    times = list(range(args.start, args.start + args.time, args.dt))
-
+    times = list(range(start, start + sim_time, dt))
     ts = load.timescale()
     sats = {tle['name']: EarthSatellite(tle['tle1'], tle['tle2'], tle['name'], ts) for index, tle in tles.iterrows()}
     dt = {t: ts.utc(datetime.fromtimestamp(t, utc)) for t in times}
-
     mi2 = pd.MultiIndex.from_product([sats.keys(), dt.keys()], names=['name', 'time'])
-
     latlot = lambda topos: {"lat": topos.latitude.degrees, "lon": topos.longitude.degrees, "alt": topos.elevation.m}
     pos = [latlot(sats[s].at(dt[t]).subpoint()) for s, t in mi2]
     pos = pd.DataFrame(pos, index=mi2)
-
-    visible = lambda sat, t: {name: (sat-station).at(t).altaz()[0].degrees > 5 for name, station in stations.items()}
+    visible = lambda sat, t: {name: (sat - station).at(t).altaz()[0].degrees > 5 for name, station in stations.items()}
     elev = [visible(sats[s], dt[t]) for s, t in mi2]
     elev = pd.DataFrame(elev, index=mi2)
-
-    interlink = lambda sat, t: {name: 0 < (sat-sat2).at(t).distance().km < 3000 for name, sat2 in sats.items()}
+    interlink = lambda sat, t: {name: 0 < (sat - sat2).at(t).distance().km < 3000 for name, sat2 in sats.items()}
     dist = [interlink(sats[s], dt[t]) for s, t in mi2]
     dist = pd.DataFrame(dist, index=mi2)
+    tracks = pos.join(elev).join(dist)
+    print(tracks)
 
-    result = pos.join(elev).join(dist)
-    print(result)
-
-    def _xor(row):
-        print(result[row])
-        print(row)
-
-    result.to_csv(time.strftime("%Y%m%d%H%M%S")+"_contact.csv")
-
-    names = list(stations.keys())+list(sats.keys())
+    timestamp = time.strftime("%Y%m%d%H%M%S")
+    tracks.to_csv(timestamp + "_tracks.csv")
+    names = list(stations.keys()) + list(sats.keys())
     tmp = {}
     contacts = []
-    result.loc[mi2[0], names] = False  # Pre-condition
-    for i in range(len(mi2)-1):
+    tracks.loc[mi2[0], names] = False  # Pre-condition
+    for i in range(len(mi2) - 1):
         for to in names:
-            if (result.loc[mi2[i], [to]] ^ result.loc[mi2[i+1], [to]]).any():
+            if (tracks.loc[mi2[i], [to]] ^ tracks.loc[mi2[i + 1], [to]]).any():
                 if tmp.get(to, None):
                     tmp[to]['end'] = mi2[i][1]
                     tmp[to]['duration'] = tmp[to]['end'] - tmp[to]['start']
                     contacts.append(tmp[to].copy())
                     del tmp[to]
                 else:
-                    tmp[to] = {"from": mi2[i][0], "to": to, "start": mi2[i+1][1], "end": None, "duration": None}
-
+                    tmp[to] = {"from": mi2[i][0], "to": to, "start": mi2[i + 1][1], "end": None, "duration": None}
     contacts = pd.DataFrame(contacts)
-    contacts.to_csv(time.strftime("%Y%m%d%H%M%S")+"_access.csv")
-    # map_plot(result, sats=list(sats.keys())+list(stations.keys()))
+    contacts.to_csv(timestamp + "_contacts.csv", index_label='access')
+
+    return tracks, contacts, names
+
+
+if __name__ == "__main__":
+    args = get_parameters()
+    tracks, contacts, names = generate_contact_plan(args.nodes, args.start, args.time, args.dt)
+    map_plot(tracks, sats=names)
     access_plot(contacts, sats=names)
