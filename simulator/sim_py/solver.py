@@ -25,15 +25,20 @@ max_time = 0
 
 
 def fitness(anIndividual):
-    valid = 2*len(anIndividual)
+    # Start time: the earlier the better
+    start = 1-df.loc[anIndividual[0], col_start]
+    # Total time: the shortest te better
+    time = 1-(df.loc[anIndividual[-1], col_end] - df.loc[anIndividual[0], col_start])
+    # Validity: more valid the sequence the better (starts 100% valid)
+    valid = len(anIndividual)
     max_valid = valid
-    start = df.loc[anIndividual[0], col_start]
 
+    # Calculate sequence validity (decreasing if not follows the criteria)
     from_list = df.loc[anIndividual, col_from].values
     to_list = df.loc[anIndividual, col_to].values
 
-    # Should start end and contain the target!
-    if to_list[0] != objective[0]:
+    # R1: Should start, finish and contain the target!
+    if from_list[0] != objective[0]:
         valid -= 1
     if to_list[-1] != objective[-1]:
         valid -= 1
@@ -41,18 +46,19 @@ def fitness(anIndividual):
         if t not in list(to_list)[1:-1]:
             valid -= 1
 
-    # Evaluate how valid is the sequence
+    # R2: Interlink rules
     for i in range(len(from_list)-1):
+        # R2.A Satellite to satellite. from[:]->to[2] then from[2]->to[:]
         if (to_list[i] in satellites) and (to_list[i] != from_list[i + 1]):
             valid -= 2
+        # R2.B Satellite to target. from[1]->to[x] then from[1]->to[:]
         if (to_list[i] in targets) and (from_list[i] != from_list[i + 1]):
             valid -= 2
 
     valid = 0 if valid < 0 else valid
     valid = valid/max_valid
-    time = abs(df.loc[anIndividual[-1], col_end] - df.loc[anIndividual[0], col_start])
 
-    a, b, c = (0.7, 0.28, 0.02)
+    a, b, c = (0.70, 0.28, 0.02)
     fitness_vars.append((valid, time, start))
     fitness_vars_adj.append((a*valid, b*time, c*start))
     result = a*valid + b*time + c*start
@@ -76,7 +82,7 @@ def termination_condition(fitness):
     else:
         std = np.std(tmp_fit[-10:-1])
         print("Tmp fitness std:", std)
-        return std < 1e-10
+        return fitness > 0.94 or (fitness > 0.85 and std < 1e-10)
 
 
 def plot_solution(df_all, df_solution, fitness, fitness_adj):
@@ -129,8 +135,8 @@ def plot_solution(df_all, df_solution, fitness, fitness_adj):
         plt.ylabel(vars[i])
 
     plt.figure()
-    plt.plot(fitness_best)
-    plt.plot(fitness_avg)
+    plt.plot(fitness)
+    plt.plot(fitness_adj)
     plt.grid()
     plt.title("Fitness functions")
     plt.legend(["Best", "Average"])
@@ -138,19 +144,23 @@ def plot_solution(df_all, df_solution, fitness, fitness_adj):
     plt.show()
 
 
-def solve(filename, target, size=100, mut=0.3, iter=100):
+def solve(contacts, target, size=100, mut=0.3, iter=100):
     global objective
     objective = target
     global df
-    df = pd.read_csv(filename)
+    df = contacts
+    global targets
+    targets = target
+    global satellites
+    satellites = [s for s in set(contacts[col_from].to_list() + contacts[col_to].to_list()) if s not in targets]
 
     # Normalize values (times: earlier are better, duration less is better)
     df = df.sort_values(col_start, ignore_index=True)
     _df = df.copy()
-    df[[col_start, col_end]] = df[[col_start, col_end]].max().max() - df[[col_start, col_end]]
-    df[[col_start, col_end]] = df[[col_start, col_end]]/df[[col_start, col_end]].max().max()
-    df[col_dt] = df[col_dt].max() - df[col_dt]
-    df[col_dt] = df[col_dt]/df[col_dt].max()
+    df[[col_start, col_end]] -= df[[col_start, col_end]].min().min()
+    df[[col_start, col_end]] /= df[[col_start, col_end]].max().max()
+    df[col_dt] -= df[col_dt].min()
+    df[col_dt] /= df[col_dt].max()
 
     ga = GA(pop_size=size, mutation_rate=mut, fitness=fitness, individual_factory=sequence_factory,
             gene_factory=gene_factory, termination_condition=termination_condition, silent=False, max_iter=iter)
@@ -158,7 +168,7 @@ def solve(filename, target, size=100, mut=0.3, iter=100):
 
     print(df.iloc[best_individual])
     df[[col_start, col_end, col_dt]] = _df[[col_start, col_end, col_dt]]
-    df[[col_start, col_end]] -= df[[col_start, col_end]].min().min()
+    #df[[col_start, col_end]] -= df[[col_start, col_end]].min().min()
 
     return df.iloc[best_individual], best_fitness_list, avg_list
 
@@ -176,7 +186,8 @@ def get_parameters():
 
 if __name__ == "__main__":
     args = get_parameters()
-    solution, fitness_best, fitness_avg = solve(args.filename, args.target, args.size, args.mut, args.iter)
+    contacts = pd.read_csv(args.filename)
+    solution, fitness_best, fitness_avg = solve(contacts, args.target, args.size, args.mut, args.iter)
     solution.to_csv(args.filename+"_solution.csv")
     print(solution)
     plot_solution(df, solution, fitness_best, fitness_avg)
