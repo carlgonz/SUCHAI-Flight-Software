@@ -97,7 +97,7 @@ def generate_contact_plan(satellites, targets, start, sim_time, dt, track_fname=
     tracks = pos.join(elev).join(dist)
     print(tracks)
     track_fname = time.strftime("%Y%m%d%H%M%S") + "_tracks.csv" if track_fname is None else track_fname
-    tracks.to_csv(track_fname)
+    tracks.to_csv(track_fname, index=False)
 
     # TODO: Optimize this code
     # Build contacts datafile
@@ -123,8 +123,9 @@ def generate_contact_plan(satellites, targets, start, sim_time, dt, track_fname=
                     tmp[to] = {"from": mi2[i][0], "to": to, "start": mi2[i + 1][1], "end": None, "duration": None}
 
     contacts = pd.DataFrame(contacts)
+    contacts['access'] = contacts.index
     plan_fname = track_fname.replace("_tracks", "_contacts") if plan_fname is None else plan_fname
-    contacts.to_csv(plan_fname, index_label='access')
+    contacts.to_csv(plan_fname, index=False)
 
     return tracks, contacts
 

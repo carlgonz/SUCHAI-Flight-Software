@@ -82,10 +82,10 @@ def termination_condition(fitness):
     else:
         std = np.std(tmp_fit[-10:-1])
         print("Tmp fitness std:", std)
-        return fitness > 0.94 or (fitness > 0.85 and std < 1e-10)
+        return fitness > 0.96 or (fitness > 0.85 and std < 1e-10)
 
 
-def plot_solution(df_all, df_solution, fitness, fitness_adj):
+def plot_solution(df_all, df_solution, fitness=[], fitness_adj=[]):
     """"
     Show and plot results
     """
@@ -168,9 +168,10 @@ def solve(contacts, target, size=100, mut=0.3, iter=100):
 
     print(df.iloc[best_individual])
     df[[col_start, col_end, col_dt]] = _df[[col_start, col_end, col_dt]]
-    #df[[col_start, col_end]] -= df[[col_start, col_end]].min().min()
-
-    return df.iloc[best_individual], best_fitness_list, avg_list
+    best_individual_original = df.iloc[best_individual]['access'].to_list()
+    # return df.iloc[best_individual], best_fitness_list, avg_list
+    print("solution is: ", best_individual_original)
+    return best_individual_original, best_fitness_list, avg_list
 
 
 def get_parameters():
@@ -188,7 +189,7 @@ if __name__ == "__main__":
     args = get_parameters()
     contacts = pd.read_csv(args.filename)
     solution, fitness_best, fitness_avg = solve(contacts, args.target, args.size, args.mut, args.iter)
-    solution.to_csv(args.filename+"_solution.csv")
+    solution.to_csv(args.filename+"_solution.csv", index=False)
     print(solution)
     plot_solution(df, solution, fitness_best, fitness_avg)
 

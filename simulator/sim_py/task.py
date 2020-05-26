@@ -32,7 +32,7 @@ task1 = {
     "targets": [
         {"id": "saa", "cmd": "take_data data1", "result": "data1", "time": None},
     ],
-    "solution": None,
+    "solution": [4, 6, 17, 51],  # None,
     "command": None
 }
 
@@ -137,17 +137,25 @@ def main(scenario=scenario1, task=task1):
         tracks, contacts = generate_contact_plan(scenario.satellites, scenario.targets, scenario.start, scenario.duration, scenario.step)
         track_filename = "track_{}_{}.csv".format(scenario.id, scenario.start)
         contacts_filename = "contacts_{}_{}.csv".format(scenario.id, scenario.start)
-        tracks.to_csv(track_filename)
-        contacts.to_csv(contacts_filename)
+        tracks.to_csv(track_filename, index=False)
+        contacts.to_csv(contacts_filename, index=False)
     else:
         tracks, contacts = pd.read_csv(scenario.tracks_file), pd.read_csv(scenario.contacts_file)
 
-    seq = [task.start] + task.targets + [task.end]
-    seq = [s["id"] for s in seq]
-    solution, fitness, average = solve(contacts, seq, mut=0.6, size=50)
-    # plot_solution(contacts, solution, fitness, average)
+    if task.solution is None:
+        seq = [task.start] + task.targets + [task.end]
+        seq = [s["id"] for s in seq]
+        solution_seq, fitness, average = solve(contacts, seq, mut=0.6, size=70)
+        solution = contacts.iloc[solution_seq]
+        # task.solution = solution
+    else:
+        solution = contacts.iloc[task.solution]
+    plot_solution(contacts, solution)
     check_solution(solution, task)
+
     commands = generate_commands(solution, task, scenario)
+    print(commands)
+    #task.command = commands
 
 
 def check_solution(solution, task):
