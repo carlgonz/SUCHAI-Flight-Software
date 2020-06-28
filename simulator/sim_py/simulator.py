@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import time
+import json
 import signal
 import argparse
 import pandas as pd
@@ -8,7 +9,7 @@ from subprocess import Popen, PIPE, DEVNULL
 
 sys.path.append("../../sandbox")
 from csp_zmq.zmqnode import CspZmqNode, CspHeader, threaded
-from telemetry import StatusTelemetry, add_lonlatalt
+from telemetry import StatusTelemetry, get_lonlatalt
 
 SCH_TRX_PORT_TM = 9   # Telemetry port
 SCH_TRX_PORT_TC = 10  # Telecommands port
@@ -74,30 +75,10 @@ class Simulator(CspZmqNode):
         self.tm_status.append(tm.list())
 
 
-def get_parameters():
-    """ Parse command line parameters """
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("-d", "--ip", default="localhost", help="Hub IP address")
-    parser.add_argument("-i", "--inport", default="8001", help="Input port")
-    parser.add_argument("-o", "--outport", default="8002", help="Output port")
-    parser.add_argument("-n", "--nodes", default=1, type=int, help="Node number")
-    parser.add_argument("-t", "--tty", default=0, type=int, help="First tty to connect")
-    parser.add_argument("--time", default=60, type=int, help="Simulation time")
-
-    return parser.parse_args()
-
-
-if __name__ == "__main__":
-    # Get arguments
-    args = get_parameters()
-    print(args)
-
-    in_port = args.inport
-    out_port = args.outport
-    # mon_port = str(8003)  # + args.node)
-    nodes = list(range(1, args.nodes+1))
-    ttys = [open("/dev/pts/{}".format(i), "wb+", buffering=0) for i in range(args.tty, args.tty+args.nodes)]
+def run_simulation(task, scenario, tty=0, ip="localhost", in_port="8001", out_port="8002"):
+    csp_nodes = {node["node"]: node["id"] for node in scenario.get("satellites")+scenario.get("targets") if node.get("node", None) is not None}
+    nodes = list(csp_nodes.keys())
+    ttys = [open("/dev/pts/{}".format(i), "wb+", buffering=0) for i in range(tty, tty+len(nodes))]
 
     simulator = Simulator()
     simulator.start(nodes, ttys)
@@ -107,34 +88,55 @@ if __name__ == "__main__":
     simulator.send_command("drp_ebf 1010")
 
     # Set up TLE
-    tles = pd.read_csv("starlink.csv")
-    tles = tles.sample(n=args.nodes, random_state=5)
-    print(tles)
-    for n in nodes:
-        tle = tles.iloc[n-1]
-        tle1, tle2 = tle[["tle1", "tle2"]]
-        # simulator.send_command("obc_set_tle "+tle1 +";"+"obc_set_tle "+tle2+";"+"obc_update_tle", [n])
-        simulator.send_command("obc_set_tle "+tle1, [n])
-        simulator.send_command("obc_set_tle "+tle2, [n])
-        simulator.send_command("obc_update_tle", [n])
+    for sat in scenario.get("satellites"):
+        simulator.send_command("obc_set_tle "+sat["tle1"], [sat["node"]])
+        simulator.send_command("obc_set_tle "+sat["tle2"], [sat["node"]])
+        simulator.send_command("obc_update_tle", [sat["node"]])
 
     # Set up date
-    # now = int(time.time())
-    now = 1587160800
-    simulator.send_command("obc_set_time "+str(now))
+    # start = int(time.time())
+    simulator.send_command("obc_set_time "+str(scenario["start"]))
+
+    # Set up task
+    first_node = [sat["node"] for sat in scenario["targets"] if sat["id"] == task["start"]["id"]]
+    simulator.send_command(task["command"], first_node)
 
     # Start simulation
     simulator.send_command("sim_start {}".format(int(time.time())+3))
     # simulator.send_command("sim_start")
     try:
-        time.sleep(args.time)
+        # TODO: Read time from simulator
+        time.sleep(scenario["duration"])
     except KeyboardInterrupt:
         pass
     finally:
-        simulator.send_command("sim_stop")
         simulator.stop()
+        simulator.send_command("sim_stop")
         tm = pd.DataFrame(simulator.tm_status, columns=StatusTelemetry().names)
-        tm = add_lonlatalt(tm, tles)
+        tm = tm.apply(get_lonlatalt, axis=1)
         tm_file = "tm_status_{}.csv".format(time.strftime("%Y%m%d-%H%M%S", time.localtime()))
         tm.to_csv(tm_file, index=False)
         print("Saved to", tm_file)
+
+
+def get_parameters():
+    """ Parse command line parameters """
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("task", metavar="TASK", help="Path to task JSON")
+    parser.add_argument("scenario", metavar="SCENARIO", help="Path to scenario JSON")
+    parser.add_argument("-t", "--tty", default=0, type=int, help="First tty to connect")
+    parser.add_argument("-d", "--ip", default="localhost", help="Hub IP address")
+    parser.add_argument("-i", "--inport", default="8001", help="Input port")
+    parser.add_argument("-o", "--outport", default="8002", help="Output port")
+
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = get_parameters()
+    with open(args.task) as task_file:
+        task = json.load(task_file)
+    with open(args.scenario) as scenario_file:
+        scenario = json.load(scenario_file)
+    run_simulation(task, scenario)

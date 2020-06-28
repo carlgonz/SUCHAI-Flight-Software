@@ -67,12 +67,6 @@ def tle_prop(row, tles=None):
     return row
 
 
-def add_lonlatalt(tm, tles):
-    tm = tm.apply(get_lonlatalt, axis=1)
-    # tm = tm.apply(tle_prop, axis=1, tles=tles)
-    return tm
-
-
 class Telemetry(object):
     def __init__(self):
         self.hdr = '2H1I'
