@@ -1,0 +1,9 @@
+{
+    "id": 1,
+    "start": "stgo",
+    "end": "tokyo",
+    "targets": [
+        {"id": "saa", "command": "sim_take_data data1", "result": "data1"}
+    ],
+    "solution": null
+}
