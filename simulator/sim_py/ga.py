@@ -11,16 +11,26 @@ This practical session provides the complete implementation of a genetic algorit
 Feedback may be sent to Juan-Pablo Silva (jpsilva@dcc.uchile.cl), Alexandre Bergel (abergel@dcc.uchile.cl)
 
 The class `GA` given above provides all the necessary to use genetic algorithm to solve a particular problem.
+
+## Changelog
+
+# 03-06-2020
+ - Authors: Carlos Gonzalez C. carlgonz@uchile.cl
+ - Changes:
+    - Use numpy.
+    - get_best_individual also return best index
+    - eval_population method
+    - Add some instance variables
+    - Style fixes
 """
 
-import copy
+import time
 import random
-import string
 import numpy as np
 
 
 # Define the main class of the genetic algorithm
-class GA:
+class GA(object):
     # pop_size is the size of the population. E.g., 1000
     # mutation_rate is the rate of a gene mutation. E.g., 0.1
     # fitness is a function that takes an individual as argument.
@@ -37,89 +47,89 @@ class GA:
         self.population_size = pop_size
         self.mutation_rate = mutation_rate
         self.fitness_function = fitness
-        self.individualFactory = individual_factory
+        self.individual_factory = individual_factory
         self.max_iterations = max_iter
         self.termination_condition = termination_condition
         self.gene_factory = gene_factory
         self.population = list()
         self.individual_fitnesses = list()
         self.silent = silent
+        self.best_index = None
+        self.best_individual = None
+
+        # Internal variables
+        self._best_fitness_list = list()
+        self._avg_list = list()
 
     # main method to actually run the algorithm
     # return a tupple best_fitness_list, avg_list, best_individual
     def run(self):
         current_iteration = 0
-        best_fitness_list = list()
-        avg_list = list()
 
         # We generate the initial population
+        ti = time.time()
         self.population = self.generate_population()
-
-        # We compute all the fitnesses. It is a collection of fitness values, of the same size than the population
-        self.individual_fitnesses = self.get_fitness(self.population)
-
-        # We get the best_individual of the current population
-        best_individual = self.get_best_individual()
+        # Evaluate current population
+        self.eval_population()
 
         # We loop if we have not reached the maximum number of iterations and if the termination condition is not met
-        while current_iteration <= self.max_iterations and not self.termination_condition(self.fitness_function(best_individual)):
-            self.log("iter {} of {}".format(current_iteration, self.max_iterations))
+        while current_iteration <= self.max_iterations and not self.termination_condition(self.fitness_function(self.best_individual)):
+            self.log("Iter {} of {}. Took {} s".format(current_iteration, self.max_iterations, time.time()-ti))
+            ti = time.time()
 
-            best_fitness_list.append(max(self.individual_fitnesses))
-            avg_list.append(np.mean(self.individual_fitnesses))
-
-            self.log("best is: {}\nwith {} acc. Avg: {}".format(best_individual, best_fitness_list[-1], avg_list[-1]))
-
-            # self.log("Poulation\n {}".format(self.population))
-
-            # we create a new population
+            # Create a new population
             new_population = []
             for _ in range(self.population_size):
                 parent1 = self.tournament(self.population)
                 parent2 = self.tournament(self.population)
                 new_population.append(self.create_new_individual(parent1, parent2))
-
             self.population = new_population
-            self.individual_fitnesses = self.get_fitness(self.population)
+
+            # Evaluate new population
+            self.eval_population()
             current_iteration += 1
-            best_individual = self.get_best_individual()
 
-        last_fitness = self.get_fitness(self.population)
-        best_individual = self.population[last_fitness.index(max(last_fitness))]
-
-        best_fitness_list.append(max(last_fitness))
-        avg_list.append(np.mean(last_fitness))
-
-        self.log("best found is: {}\nwith {} acc. Avg: {}".format(best_individual, best_fitness_list[-1], avg_list[-1]))
-
-        return best_fitness_list, avg_list, best_individual
+        self.log("Best found is: {}\nFitness: {}. Avg: {}".format(self.best_individual, self._best_fitness_list[-1], self._avg_list[-1]))
+        return self.best_individual
 
     # Logging 
     def log(self, aString):
         if not self.silent:
             print(aString)
 
+    # Evaluate current population (self.population)
+    # Update individuals fitness list, best individual and best index
+    # Also update performance metrics (for further analysis)
+    def eval_population(self):
+        self.individual_fitnesses = self.get_fitness(self.population)
+        self.best_index, self.best_individual = self.get_best_individual()
+        self._best_fitness_list.append(self.individual_fitnesses[self.best_index])
+        self._avg_list.append(np.mean(self.individual_fitnesses))
+        self.log("Best is: {}. Fitness: {:01.4f}. Avg: {:01.4f}".format(self.best_individual, self._best_fitness_list[-1], self._avg_list[-1]))
+
     # return the best individual of the current population
     def get_best_individual(self):
-        return self.population[self.individual_fitnesses.index(max(self.individual_fitnesses))]
+        index = np.argmax(self.individual_fitnesses)
+        return index, self.population[index]
 
     # generate the population, made of individuals
     def generate_population(self):
         _population = list()
         for _ in range(self.population_size):
-            _population.append(self.individualFactory())
+            _population.append(self.individual_factory())
         return _population
 
     # Return the list of the fitness values for the population
     def get_fitness(self, aPopulation):
-        return list(map(self.fitness_function, aPopulation))
+        res = np.array(list(map(self.fitness_function, aPopulation)))
+        return res
 
     # Obtain the best individual from a tournament on the population
-    def tournament(self, aPopulation, k=5):
+    def tournament(self, a_population, k=5):
         best = None
         best_fitness = -1
         for _ in range(1, k):
-            ind = random.choice(aPopulation)
+            ind = random.choice(a_population)
             if best is None or (self.fitness_function(ind) > best_fitness):
                 best = ind
                 best_fitness = self.fitness_function(ind)
@@ -131,8 +141,7 @@ class GA:
         # mutation
         if random.random() < self.mutation_rate:
             self.mutate(final_child)
-        # return final_child
-        return sorted(set(final_child))
+        return final_child
 
     # crossover operation
     # crossover([1,2,3,4], [10,20,30,40])
