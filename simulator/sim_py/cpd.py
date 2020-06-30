@@ -65,7 +65,7 @@ class GeneticCPD(GA):
         # len_task = len(self.task_nodes)  # Targets + start + end
         # seq = sorted(set([self.gene_factory() for i in range(np.random.randint(len_task, 3*len_task))]))
         # print(seq)
-        seq = choices([True, False], [1, 2], k=len(self.contact_list))
+        seq = choices([True, False], [1, 10], k=len(self.contact_list))
         return seq
 
     def gene_factory(self):
@@ -74,7 +74,7 @@ class GeneticCPD(GA):
         :return: Int
         """
         # return np.random.randint(self.contact_list.index[0], self.contact_list.index[-1])
-        return choices([True, False], [1, 2])[0]
+        return choices([True, False], [2, 1])[0]
 
     def termination_condition(self, fitness):
         """
@@ -83,6 +83,7 @@ class GeneticCPD(GA):
         :param fitness: Float. Current fitness value
         :return: Bool.
         """
+        valid = fitness[1]
         fitness = fitness[0]
         self._tmp_fit.append(fitness)
         if len(self._tmp_fit) < 20:
@@ -90,7 +91,7 @@ class GeneticCPD(GA):
         else:
             std = np.std(self._tmp_fit[-10:-1])
             print("Tmp fitness std:", std)
-            return fitness > 0.95 or (fitness > 0.85 and std < 1e-10)
+            return fitness > 0.95 or (valid > 0.98 and std < 1e-10)
 
     def eval_population(self):
         """
@@ -162,7 +163,7 @@ class GeneticCPD(GA):
         valid = 0 if valid < 0 else valid
         valid = valid / max_valid
 
-        a, b, c = (0.70, 0.28, 0.02)
+        a, b, c = (0.60, 0.38, 0.02)
         result = a * valid + b * total_time + c * start
         return result, valid, total_time, start
 
@@ -233,7 +234,7 @@ def get_parameters():
     parser.add_argument("scenario", metavar='SCENARIO', help="File with access list")
     parser.add_argument("task", metavar='TASK', help="Task file")
     parser.add_argument("-s", "--size", default=50, type=int, help="Population size")
-    parser.add_argument("-m", "--mut", default=0.3, type=float, help="Mutation rate")
+    parser.add_argument("-m", "--mut", default=0.6, type=float, help="Mutation rate")
     parser.add_argument("-i", "--iter", default=100, type=int, help="Max. iterations")
     return parser.parse_args()
 
@@ -262,4 +263,5 @@ if __name__ == "__main__":
     # Run Genetic Algorithm
     cpd = GeneticCPD(contacts, task_nodes, relay_nodes, target_nodes, args.size, args.mut, args.iter, False)
     solution, fitness = cpd.run()
+    print(contacts.iloc[solution])
     cpd.plot_results()
