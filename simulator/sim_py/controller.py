@@ -74,7 +74,7 @@ class ConstellationController(object):
         # Build tracks datafile
         tracks = pos.join(gs_contacts).join(tgt_contacts).join(isl_contacts)
         track_fname = "logs/" + time.strftime("%Y%m%d%H%M%S") + "_tracks.csv" if track_fname is None else track_fname
-        tracks.to_csv(track_fname, index=False)
+        tracks.to_csv(track_fname)
 
         # TODO: Optimize this code
         # Build contacts list datafile
