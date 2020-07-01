@@ -1,5 +1,6 @@
 numpy
 pandas
 matplotlib
-#cartopy
+#requires geos, proj
+cartopy
 skyfield

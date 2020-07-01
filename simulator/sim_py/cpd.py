@@ -17,6 +17,7 @@ from random import choices
 import matplotlib.pyplot as plt
 from ga import GA
 from definitions import *
+from plot_results import plot_contact_list
 
 
 class GeneticCPD(GA):
@@ -182,33 +183,15 @@ class GeneticCPD(GA):
 
         self.contact_list[[COL_START, COL_END, COL_DT]] = _tmp_contact_list[[COL_START, COL_END, COL_DT]]
         best_individual_original = self.contact_list.iloc[best_individual]['access'].to_list()
+        self.contact_plan = self.contact_list.iloc[self.best_individual]
         self.log("Solution is: {}, Fitness: {}. Time {}s".format(best_individual_original, self._best_fitness_list[-1], self._time))
         return best_individual_original, self._best_fitness_list[-1]
 
-    def plot_results(self):
+    def plot_results(self, scenario: Scenario = None):
         """"
         Show and plot results
         """
-        # Contact List
-        access = self.contact_list.set_index(COL_START, inplace=False, drop=False)
-        access_x = access.loc[:, [COL_START, COL_START]].values
-        access_y = access.loc[:, [COL_FROM, COL_TO]].values
-        access_dt = np.log10(access.loc[:, COL_DT].values * 0.0001 + 1e-6)
-        # Plot the contact list
-        plt.figure()
-        for i in range(len(access_x)):
-            res_plt, = plt.plot(access_x[i], access_y[i], 'o-', color='gray', alpha=0.7, linewidth=access_dt[i])
-        # Contact Plan
-        df_solution = self.contact_list.iloc[self.best_individual]
-        results_x = df_solution.loc[:, [COL_START, COL_START]].values
-        results_y = df_solution.loc[:, [COL_FROM, COL_TO]].values
-        # Plot the contact plan solution, over the contact list
-        for i in range(len(results_x)):
-            res_plt, = plt.plot(results_x[i], results_y[i], 'r.--')
-        plt.grid()
-        plt.title("Contact plan")
-        plt.xlabel("Time (s)")
-        plt.ylabel("Satellites and targets")
+        plot_contact_list(self.contact_list, scenario, self.contact_plan)
 
         # Plot multi objective fitness values
         vars = ["Fitness", "Valid", "Total time", "Start time"]
@@ -264,4 +247,4 @@ if __name__ == "__main__":
     cpd = GeneticCPD(contacts, task_nodes, relay_nodes, target_nodes, args.size, args.mut, args.iter, False)
     solution, fitness = cpd.run()
     print(contacts.iloc[solution])
-    cpd.plot_results()
+    cpd.plot_results(scenario)
