@@ -29,11 +29,12 @@ LON_COL = "lon"
 NODE_COL = "node"
 
 
-def plot_tracks(tracks: pd.DataFrame, scenario: Scenario):
+def plot_tracks(tracks: pd.DataFrame, scenario: Scenario, figname: str = None):
     """
     Plot constellation tracks
     :param tracks: DataFrame. Tracks table.
     :param scenario: Scenario. Scenario definition.
+    :param figname: Str. Filename to save figure
     :return: None
     """
     plt.figure()
@@ -61,13 +62,18 @@ def plot_tracks(tracks: pd.DataFrame, scenario: Scenario):
         ax.scatter(s.lon, s.lat, s=[1000], facecolors='none', edgecolor='r', alpha=0.5)
         ax.text(s.lon+1, s.lat+1, s.id)
 
-    plt.show()
+    if figname:
+        plt.savefig(figname)
+    else:
+        plt.show()
 
 
-def plot_contact_list(contacts: pd.DataFrame, scenario: Scenario = None, contact_plan: pd.DataFrame = None, plot_duration=False):
+def plot_contact_list(contacts: pd.DataFrame, scenario: Scenario = None, contact_plan: pd.DataFrame = None,
+                      plot_duration=False, figname: str = None):
 
+    contacts = contacts.copy()
     start = contacts[COL_START].min()
-    contacts[COL_START] -= start
+    contacts.loc[:, [COL_START]] -= start
     access_x = contacts.loc[:, [COL_START, COL_START]].values
     access_y = contacts.loc[:, [COL_FROM, COL_TO]].values
 
@@ -88,7 +94,8 @@ def plot_contact_list(contacts: pd.DataFrame, scenario: Scenario = None, contact
 
     # Plot Contact Plan
     if contact_plan is not None:
-        contact_plan[COL_START] -= start
+        contact_plan = contact_plan.copy()
+        contact_plan.loc[:, [COL_START]] -= start
         results_x = contact_plan.loc[:, [COL_START, COL_START]].values
         results_y = contact_plan.loc[:, [COL_FROM, COL_TO]].values
         for i in range(len(results_x)):
@@ -101,8 +108,12 @@ def plot_contact_list(contacts: pd.DataFrame, scenario: Scenario = None, contact
     plt.title("Contact list" if contact_plan is None else "Contact list and contact plan")
     plt.grid()
     plt.xlabel("Timestamp since {} (s) ".format(start))
-    plt.ylabel("Nodes")
-    plt.show()
+    # plt.ylabel("Nodes")
+
+    if figname:
+        plt.savefig(figname)
+    else:
+        plt.show()
 
 
 def get_parameters():

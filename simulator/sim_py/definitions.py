@@ -94,7 +94,7 @@ class Scenario(Definition):
         self.tracks = tracks
         self.contacts = contacts
 
-    def node(self, id):
+    def get(self, id):
         return self._ids.get(id, None)
 
 

@@ -17,6 +17,7 @@ from datetime import datetime
 from skyfield.api import EarthSatellite, Topos, load, utc
 from definitions import *
 from cpd import GeneticCPD
+from plot_results import *
 # from simulator import run_simulation
 
 
@@ -27,6 +28,8 @@ class ConstellationController(object):
         self._contact_list = None
         self._contact_plan = None
         self._flight_plan = None
+        self._log_names = ["fit", "val", "dt", "len", "time", "solution", "l"]
+        self._log = []
 
     def contact_list(self, track_fname=None, contacts_fname=None):
         """
@@ -109,25 +112,26 @@ class ConstellationController(object):
         self.scenario.tracks = track_fname
         self._contact_list = contacts
 
-        return contacts
+        return tracks, contacts
 
-    def contact_plan(self, contact_fname=None):
+    def contact_plan(self, population=50, mutation=0.3, iter=100, contact_fname=None, plot=False):
         """
         Creates the contact plan using the evolutive contact plan design (CPD)
         :return: DataFrame
         """
-        # Define target as node list
-        task_nodes = [self.scenario.node(_id).node for _id in self.task.ids()]
-        relay_nodes = [n.node for n in self.scenario.satellites+self.scenario.stations]
-        target_nodes = [n.node for n in self.scenario.targets]
-        # Genetic Evolutive Plan Design
-        cpd = GeneticCPD(self._contact_list, task_nodes, relay_nodes, target_nodes, 25, 0.6, 100, False)
+        # Genetic Contact Plan Design
+        cpd = GeneticCPD(self._contact_list, self.scenario, self.task, population, mutation, iter, silent=False)
         solution, fitness = cpd.run()
+        # Save log variables
+        # ["fit", "val", "dt", "len", "time", "solution", "l"]
+        self._log.append((cpd._multi_fitness_list[-1][0], cpd._multi_fitness_list[-1][1], cpd._multi_fitness_list[-1][2], cpd._multi_fitness_list[-1][3],
+                          cpd._time, solution, len(solution)))
         # Save results
         contact_fname = "logs/" + time.strftime("%Y%m%d%H%M%S") + "_contact_plan.csv" if contact_fname is None else contact_fname
         self._contact_plan = self._contact_list.iloc[solution]
         self._contact_plan.to_csv(contact_fname, index=False)
-        cpd.plot_results()
+        if plot:
+            cpd.plot_results(self.scenario)
         return self._contact_plan
 
     def check_contact_plan(self):
@@ -136,10 +140,15 @@ class ConstellationController(object):
         :return: Bool
         """
         try:
-            assert self._contact_plan.iloc[0][COL_FROM] == self.scenario.node(self.task.start).node
-            assert self._contact_plan.iloc[-1][COL_TO] == self.scenario.node(self.task.end).node
+            assert self._contact_plan.iloc[0][COL_FROM] == self.scenario.get(self.task.start).node
+            assert self._contact_plan.iloc[-1][COL_TO] == self.scenario.get(self.task.end).node
+            to_nodes = self._contact_plan.iloc[1:-1][COL_TO].to_list()
             for tgt in self.task.targets:
-                assert self.scenario.node(tgt.id).node in self._contact_plan.iloc[1:-1][COL_TO].to_list()
+                tgt_node = self.scenario.get(tgt.id).node
+                if tgt_node not in to_nodes:
+                    assert(tgt.prio <= 0)
+                else:
+                    to_nodes.remove(tgt_node)
         except AssertionError:
             print("Invalid sequence")
             return False
@@ -158,8 +167,8 @@ class ConstellationController(object):
         if self.task is None or self._contact_plan is None:
             raise AttributeError("Task or contact plan not initialized!")
 
-        sat_sta_nodes = [sat.node for sat in self.scenario.satellites+self.scenario.stations]
-        target_nodes = {self.scenario.node(tgt.id).node: tgt for tgt in self.task.targets}
+        sat_sta_nodes = [sat.node for sat in self.scenario.satellites + self.scenario.stations]
+        target_nodes = {self.scenario.get(tgt.id).node: tgt for tgt in self.task.targets}
         data = None
         flight_plan = []
 
@@ -193,11 +202,15 @@ class ConstellationController(object):
         return self._flight_plan
 
 
-def main(scenario_path, task_path):
+def main(scenario_path, task_path, solutions=1, size=50, mut=0.3, iter=500):
     """
     Constellation control framework entry point
     :param scenario_path: Str. Path to scenario definition json
     :param task_path: Str. Path to task definition json
+    :param solutions:Int. Number of solutions to find
+    :param size: Int. Size of the GA population
+    :param mut: Float. GA mutation rate
+    :param iter: Int. GA max. iterations
     :return: None
     """
     # Load scenario and task definition
@@ -213,20 +226,27 @@ def main(scenario_path, task_path):
     if controller.scenario.tracks is None or controller.scenario.contacts is None:
         track_filename = "logs/track_{}_{}.csv".format(scenario.id, scenario.start)
         contacts_filename = "logs/contacts_{}_{}.csv".format(scenario.id, scenario.start)
-        controller.contact_list(track_filename, contacts_filename)
+        tracks, contacts = controller.contact_list(track_filename, contacts_filename)
     else:
         tracks, contacts = pd.read_csv(scenario.tracks), pd.read_csv(scenario.contacts)
         controller._contact_list = contacts
 
     # Create or load contact_plan and contact_list
     if task.solution is None:
-        contact_plan_fname = "logs/contact_plan_{}_{}.csv".format(task.id, scenario.start)
-        flight_plan_fname = "logs/flight_plan_{}_{}.csv".format(task.id, scenario.start)
-        ok = False
-        while not ok:
-            controller.contact_plan(contact_plan_fname)
-            ok = controller.check_contact_plan()
-        controller.flight_plan(flight_plan_fname)
+        for i in range(solutions):
+            print("-------- SOLUTION {:02} --------".format(i))
+            contact_plan_fname = "results1/contact_plan_s{}_t{}_i{}.csv".format(scenario.id, task.id, i)
+            flight_plan_fname = "results1/flight_plan_s{}_t{}_i{}.csv".format(scenario.id, task.id, i)
+            ok = False
+            contact_plan = pd.DataFrame()
+            while not ok:
+                contact_plan = controller.contact_plan(size, mut, iter, contact_plan_fname, plot=False)
+                ok = controller.check_contact_plan()
+            controller.flight_plan(flight_plan_fname)
+            figname = "results1/cp_s{}_t{}_i{}_.png".format(scenario.id, task.id, i)
+            plot_contact_list(contacts, controller.scenario, contact_plan, figname=figname)
+        log = pd.DataFrame(controller._log, columns=controller._log_names)
+        log.to_csv("results1/log_s{}_t{}.csv".format(scenario.id, task.id))
     else:
         solution = pd.read_csv(task.solution)
         controller._flight_plan = solution
@@ -245,9 +265,10 @@ def get_parameters():
     parser.add_argument("-s", "--size", default=50, type=int, help="Population size")
     parser.add_argument("-m", "--mut", default=0.3, type=float, help="Mutation rate")
     parser.add_argument("-i", "--iter", default=100, type=int, help="Max. iterations")
+    parser.add_argument("-n", "--runs", default=10, type=int, help="Number of simulations")
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     args = get_parameters()
-    main(args.scenario, args.task)
+    main(args.scenario, args.task, args.runs, args.size, args.mut, args.iter)

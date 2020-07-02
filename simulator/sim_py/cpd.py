@@ -21,7 +21,8 @@ from plot_results import plot_contact_list
 
 
 class GeneticCPD(GA):
-    def __init__(self, contact_list, task_nodes, relays, targets, pop_size, mutation_rate, max_iter=100, silent=False):
+    def __init__(self, contact_list: pd.DataFrame, scenario: Scenario, task: Task, pop_size: int, mutation_rate: float,
+                 max_iter: int = 100, silent: bool = False):
         """
         Contact plan design using genetic algorithm
         :param contact_list: DataFrame. Contact list table
@@ -44,9 +45,8 @@ class GeneticCPD(GA):
         self.best_individual = None
 
         # Contact list and contact plan
-        self.task_nodes = task_nodes
-        self.relay_nodes = relays
-        self.target_nodes = targets
+        self.scenario = scenario
+        self.task = task
         self.contact_list = contact_list
         self.contact_plan = None
 
@@ -92,7 +92,16 @@ class GeneticCPD(GA):
         else:
             std = np.std(self._tmp_fit[-10:-1])
             print("Tmp fitness std:", std)
-            return fitness > 0.95 or (valid > 0.98 and std < 1e-10)
+            if fitness > 0.8 and valid > 0.99:
+                return True
+            elif std < 1e-10:
+                self.log("Creating new population!")
+                for i in self.population:
+                    for j in range(10):
+                        self.mutate(i)
+                return False
+            else:
+                return False
 
     def eval_population(self):
         """
@@ -122,9 +131,9 @@ class GeneticCPD(GA):
         :return: Float.
         """
         contact_list = self.contact_list
-        task_nodes = self.task_nodes
-        relay_nodes = self.relay_nodes
-        target_nodes = self.target_nodes
+        task_nodes = [self.scenario.get(tgt.id).node for tgt in self.task.targets]
+        relay_nodes = [node.node for node in self.scenario.satellites+self.scenario.stations]
+        target_nodes = [node.node for node in self.scenario.targets]
 
         individual = np.arange(len(contact_list))[individual]
         if len(individual) == 0:
@@ -143,14 +152,20 @@ class GeneticCPD(GA):
         from_list = contact_list.loc[individual, COL_FROM].values
         to_list = contact_list.loc[individual, COL_TO].values
 
-        # R1-R3: Should start, finish and contain the target!
-        if from_list[0] != task_nodes[0]:
+        # R1-R2: Must start and finish according to task
+        if from_list[0] != self.scenario.get(self.task.start).node:
             valid -= penalty
-        if to_list[-1] != task_nodes[-1]:
+        if to_list[-1] != self.scenario.get(self.task.end).node:
             valid -= penalty
-        for t in task_nodes[1:-1]:
-            if t not in list(to_list)[1:-1]:
+        # R3: Must contain the task targets
+        to_targets = list(to_list)[1:-1]
+        for task_node, target in zip(task_nodes, self.task.targets):
+            # Penalty if target no in the list, except if the target priority is 0
+            if task_node not in to_targets and target.prio > 0:
                 valid -= penalty
+            # Remove the target from the list, to check repeated targets
+            else:
+                to_targets.remove(task_node)
 
         # R4-R5: Interlink rules
         for i in range(len(from_list) - 1):
@@ -163,10 +178,11 @@ class GeneticCPD(GA):
 
         valid = 0 if valid < 0 else valid
         valid = valid / max_valid
+        length = 1 - len(individual)/len(self.contact_list)
 
-        a, b, c = (0.60, 0.38, 0.02)
-        result = a * valid + b * total_time + c * start
-        return result, valid, total_time, start
+        a, b, c = (0.60, 0.20, 0.20)
+        result = a*valid + b*total_time + c*length
+        return result, valid, total_time, length
 
     def run(self):
         # Normalize values (times: earlier are better, duration less is better)
@@ -238,13 +254,8 @@ if __name__ == "__main__":
     assert(scenario.contacts is not None)
     contacts = pd.read_csv(scenario.contacts)
 
-    # Define target as node list
-    task_nodes = [scenario.node(_id).node for _id in task.ids()]
-    relay_nodes = [n.node for n in scenario.satellites + scenario.stations]
-    target_nodes = [n.node for n in scenario.targets]
-
     # Run Genetic Algorithm
-    cpd = GeneticCPD(contacts, task_nodes, relay_nodes, target_nodes, args.size, args.mut, args.iter, False)
+    cpd = GeneticCPD(contacts, scenario, task, args.size, args.mut, args.iter, False)
     solution, fitness = cpd.run()
     print(contacts.iloc[solution])
     cpd.plot_results(scenario)
